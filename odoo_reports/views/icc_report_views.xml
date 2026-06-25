@@ -31,7 +31,7 @@
                             <field name="user_id"/>
                             <field name="generation_date"/>
                         </group>
-                        <group string="File Info">
+                        <group string="File Info" invisible="state != 'generated'">
                             <field name="file_name"/>
                             <field name="file_size"/>
                         </group>
