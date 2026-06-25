@@ -17,7 +17,7 @@ class IccReport(models.Model):
     _description = 'ICC Amex Report'
     _order = 'write_date desc'
 
-    name = fields.Char(string='Report Name', required=True, readonly=True)
+    name = fields.Char(string='Report Name', required=True)
     report_key = fields.Selection(selection=[
         ('daily_campaign', 'Daily Campaign Results v3'),
         ('calls_consolidate', 'Calls Consolidate Report'),
