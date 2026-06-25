@@ -28,6 +28,7 @@ Reports:
         'security/ir.model.access.csv',
         'views/icc_report_views.xml',
         'views/icc_report_menu.xml',
+        'data/icc_report_data.xml',
     ],
     'assets': {
         'web.assets_backend': [
