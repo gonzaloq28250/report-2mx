@@ -1,4 +1,4 @@
-import io
+import base64
 import logging
 
 from odoo import http
@@ -17,6 +17,9 @@ class IccReportController(http.Controller):
             return request.not_found()
 
         file_data = report.file_data
+        if isinstance(file_data, str):
+            file_data = base64.b64decode(file_data)
+
         filename = report.file_name or 'report.xlsx'
 
         content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
