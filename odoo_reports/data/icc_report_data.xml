@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="report_service_level" model="icc.report">
+            <field name="name">Service Level Report</field>
+            <field name="report_key">service_level</field>
+        </record>
+        <record id="report_daily_campaign" model="icc.report">
+            <field name="name">Daily Campaign Results v3</field>
+            <field name="report_key">daily_campaign</field>
+        </record>
+        <record id="report_calls_consolidate" model="icc.report">
+            <field name="name">Calls Consolidate Report</field>
+            <field name="report_key">calls_consolidate</field>
+        </record>
+        <record id="report_call_disposition" model="icc.report">
+            <field name="name">Call Disposition Report</field>
+            <field name="report_key">call_disposition</field>
+        </record>
+        <record id="report_visit_log_optblue" model="icc.report">
+            <field name="name">Visit Log Optblue Report</field>
+            <field name="report_key">visit_log_optblue</field>
+        </record>
+        <record id="report_visits_disposition" model="icc.report">
+            <field name="name">Visits Disposition Report</field>
+            <field name="report_key">visits_disposition</field>
+        </record>
+        <record id="report_pr_calls_duration" model="icc.report">
+            <field name="name">PR Calls Duration Report</field>
+            <field name="report_key">pr_calls_duration</field>
+        </record>
+        <record id="report_pr_escalation" model="icc.report">
+            <field name="name">PR Escalation Report</field>
+            <field name="report_key">pr_escalation</field>
+        </record>
+        <record id="report_optouts_dnc" model="icc.report">
+            <field name="name">OPTOUTS-DNC Report</field>
+            <field name="report_key">optouts_dnc</field>
+        </record>
+    </data>
+</odoo>
