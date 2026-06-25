@@ -142,16 +142,14 @@ class IccReport(models.Model):
             raise UserError(_('Unexpected error during generation: %s') % str(e))
 
     def action_download(self):
-        """Return action to download the generated file."""
+        """Trigger download of the generated file via controller."""
         self.ensure_one()
         if self.state != 'generated' or not self.file_data:
             raise UserError(_('No file available. Generate the report first.'))
         return {
-            'type': 'ir.actions.act_window',
-            'res_model': self._name,
-            'res_id': self.id,
-            'view_mode': 'form',
-            'target': 'current',
+            'type': 'ir.actions.act_url',
+            'url': '/icc/report/download/%d' % self.id,
+            'target': 'self',
         }
 
     @api.model

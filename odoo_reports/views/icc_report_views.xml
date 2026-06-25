@@ -9,37 +9,37 @@
                 <header>
                     <button name="action_generate" string="Generate Report" type="object"
                             class="oe_highlight"
-                            attrs="{'invisible': [('state', '!=', 'draft')]}"
+                            invisible="state not in ['draft']"
                             confirm="This will execute the Python generation script. Continue?"/>
                     <button name="action_generate" string="Regenerate" type="object"
                             class="oe_highlight"
-                            attrs="{'invisible': [('state', 'not in', ['generated', 'error'])]}"
+                            invisible="state not in ['generated', 'error']"
                             confirm="This will regenerate the report. Continue?"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,generated"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="buttons">
-                        <button name="/icc/report/download/%(id)d" type="http" string="Download File"
+                        <button name="action_download" string="Download File" type="object"
                                 class="oe_highlight"
-                                attrs="{'invisible': [('state', '!=', 'generated')]}"/>
+                                invisible="state != 'generated'"/>
                     </div>
                     <div class="oe_title">
-                        <h1><field name="name" readonly="1"/></h1>
+                        <h1><field name="name"/></h1>
                     </div>
                     <group>
                         <group string="Report Info">
-                            <field name="report_key" readonly="1"/>
-                            <field name="user_id" readonly="1"/>
-                            <field name="generation_date" readonly="1"/>
+                            <field name="report_key"/>
+                            <field name="user_id"/>
+                            <field name="generation_date"/>
                         </group>
                         <group string="File Info">
-                            <field name="file_name" readonly="1"/>
-                            <field name="file_size" readonly="1" widget="integer"/>
+                            <field name="file_name"/>
+                            <field name="file_size"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="Generation Log" name="log">
-                            <field name="generation_log" readonly="1" placeholder="Log output will appear here after generation..."/>
+                            <field name="generation_log" placeholder="Log output will appear here after generation..."/>
                         </page>
                     </notebook>
                 </sheet>
@@ -57,15 +57,9 @@
                 <field name="report_key"/>
                 <field name="state" widget="badge" decoration-success="state == 'generated'" decoration-danger="state == 'error'"/>
                 <field name="file_name"/>
-                <field name="file_size" widget="integer"/>
+                <field name="file_size"/>
                 <field name="generation_date"/>
                 <field name="user_id"/>
-                <button name="action_generate" string="Generate" type="object"
-                        class="btn-primary btn-sm"
-                        attrs="{'invisible': [('state', '!=', 'draft')]}"/>
-                <button name="action_generate" string="Regenerate" type="object"
-                        class="btn-warning btn-sm"
-                        attrs="{'invisible': [('state', 'not in', ['generated', 'error'])]}"/>
             </list>
         </field>
     </record>
@@ -94,7 +88,6 @@
         <field name="res_model">icc.report</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_icc_report_search"/>
-        <field name="context">{'search_default_generated': 0}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 No reports generated yet.
