@@ -11,6 +11,9 @@ _logger = logging.getLogger(__name__)
 # Path to the py/ directory (sibling of odoo_reports/)
 _PY_DIR = Path(__file__).resolve().parent.parent.parent / 'py'
 
+# Reports output directory (where scripts actually write files)
+_REPORTS_DIR = Path(__file__).resolve().parent.parent.parent / 'reports'
+
 
 class IccReport(models.Model):
     _name = 'icc.report'
@@ -106,7 +109,7 @@ class IccReport(models.Model):
             if not output_name:
                 raise UserError(_('No output file configured for: %s') % self.report_key)
 
-            output_path = _PY_DIR / 'reports' / output_name
+            output_path = _REPORTS_DIR / output_name
             if not output_path.exists():
                 self.write({
                     'state': 'error',
