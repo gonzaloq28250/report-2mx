@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Top-level menu -->
+    <menuitem id="menu_icc_reports_root"
+              name="ICC Amex Reports"
+              sequence="50"
+              web_icon="odoo_reports,static/description/icon.png"/>
+
+    <!-- Reports menu -->
+    <menuitem id="menu_icc_reports_list"
+              name="Reports"
+              parent="menu_icc_reports_root"
+              action="action_icc_report"
+              sequence="10"/>
+</odoo>
