@@ -28,7 +28,7 @@ class IccReport(models.Model):
         ('pr_escalation', 'PR Escalation Report'),
         ('service_level', 'Service Level Report'),
         ('optouts_dnc', 'OPTOUTS-DNC Report'),
-    ], string='Report Type', required=True, readonly=True)
+    ], string='Report Type', required=True)
     state = fields.Selection([
         ('draft', 'Draft'),
         ('generated', 'Generated'),
