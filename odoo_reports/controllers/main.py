@@ -23,17 +23,16 @@ class IccReportController(http.Controller):
         if not file_path.exists():
             return request.not_found()
 
-        attachment = request.env['ir.attachment'].create({
-            'name': filename,
-            'type': 'binary',
-            'res_model': 'icc.report',
-            'res_id': report.id,
-        })
+        with open(str(file_path), 'rb') as f:
+            file_data = f.read()
 
-        attachment.write({
-            'datas': open(str(file_path), 'rb').read(),
-        })
-
-        return request.redirect(
-            '/web/content/ir.attachment/%d/datas' % attachment.id
-        )
+        response = request.make_response(file_data, [
+            ('Content-Type', 'application/octet-stream'),
+            ('Content-Disposition', 'attachment; filename="%s"' % filename),
+            ('Content-Length', len(file_data)),
+            ('Content-Encoding', 'identity'),
+            ('Cache-Control', 'no-cache, no-store, must-revalidate'),
+            ('Pragma', 'no-cache'),
+            ('Expires', '0'),
+        ])
+        return response
