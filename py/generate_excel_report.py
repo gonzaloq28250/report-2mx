@@ -144,20 +144,23 @@ def generate_excel(output_path=None):
 
             print(f"  Escritos {len(sl_data)} registros")
 
-        # Eliminar las otras hojas (solo mantener Service Level)
-        print("Eliminando hojas no necesarias...")
-        sheets_to_remove = []
+        # Limpiar hojas no necesarias en vez de eliminarlas (evita corrupcion)
+        print("Limpiando hojas no necesarias...")
         for sheet_name in wb.sheetnames:
             if sheet_name != 'Service Level':
-                sheets_to_remove.append(sheet_name)
+                ws_clean = wb[sheet_name]
+                for row in ws_clean.iter_rows():
+                    for cell in row:
+                        cell.value = None
+                print(f"  Limpiada hoja: {sheet_name}")
 
-        for sheet_name in sheets_to_remove:
-            wb.remove(wb[sheet_name])
-            print(f"  Eliminada hoja: {sheet_name}")
-
-        # Guardar
-        wb.save(output_path)
+        # Guardar a archivo temporal y reemplazar (evita corrupcion)
+        import tempfile
+        import shutil
+        temp_path = str(output_path) + '.tmp'
+        wb.save(temp_path)
         wb.close()
+        shutil.move(temp_path, str(output_path))
 
         print(f"\nExcel generado: {output_path}")
         return str(output_path)
