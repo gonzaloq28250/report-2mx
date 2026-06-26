@@ -1,42 +1,38 @@
-import base64
 import logging
+from pathlib import Path
 
 from odoo import http
 from odoo.http import request
 
 _logger = logging.getLogger(__name__)
 
+_REPORTS_DIR = Path(__file__).resolve().parent.parent.parent / 'reports'
+
 
 class IccReportController(http.Controller):
 
     @http.route('/icc/report/download/<int:report_id>', type='http', auth='user', methods=['GET'])
     def download_report(self, report_id, **kwargs):
-        _logger.info('=== Download request for report %d ===', report_id)
-
         report = request.env['icc.report'].browse(report_id)
         if not report.exists() or report.state != 'generated':
-            _logger.warning('Report %d not found or not generated', report_id)
             return request.not_found()
 
         filename = report.file_name or 'report.xlsx'
-        _logger.info('File: %s, file_data type: %s, len: %s',
-                      filename, type(report.file_data),
-                      len(report.file_data) if report.file_data else 0)
+        file_path = _REPORTS_DIR / filename
 
-        if not report.file_data:
-            _logger.warning('No file_data for report %d', report_id)
+        _logger.info('Download: %s (exists=%s)', file_path, file_path.exists())
+
+        if not file_path.exists():
             return request.not_found()
 
-        file_data = report.file_data
-        if isinstance(file_data, str):
-            _logger.info('Decoding base64 string')
-            file_data = base64.b64decode(file_data)
+        with open(str(file_path), 'rb') as f:
+            file_data = f.read()
 
-        _logger.info('Serving %d bytes', len(file_data))
+        _logger.info('Serving %d bytes for %s', len(file_data), filename)
 
         headers = [
             ('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
             ('Content-Disposition', 'attachment; filename="%s"' % filename),
             ('Content-Length', str(len(file_data))),
         ]
-        return request.make_response(bytes(file_data), headers)
+        return request.make_response(file_data, headers)
