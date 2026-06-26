@@ -1,19 +1,19 @@
 """
 Generar Service-Level-Report.xlsx desde MySQL para ICC Amex
-Genera Excel desde cero (sin template) para evitar corrupcion
+Solo hoja Service Level con Production Hours
 """
 
 import mysql.connector
 from datetime import datetime
 from pathlib import Path
-from openpyxl import Workbook
-from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
+from openpyxl import load_workbook
 import sys
 import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import config
 
+TEMPLATE_PATH = config.TEMPLATES['service_level']
 OUTPUT_PATH = config.OUTPUT_FILES['service_level']
 
 
@@ -22,7 +22,9 @@ def get_connection():
 
 
 def get_service_level_data(conn):
+    """Obtener datos para la hoja Service Level"""
     cursor = conn.cursor()
+
     query = """
     SELECT
         DATE(o.date) as fecha,
@@ -46,28 +48,40 @@ def get_service_level_data(conn):
     GROUP BY DATE(o.date)
     ORDER BY DATE(o.date)
     """
+
     cursor.execute(query)
     results = cursor.fetchall()
+    print(f"Registros obtenidos: {len(results)}")
+    if results:
+        print(f"Primera fila: {results[0]}")
     cursor.close()
-
-    def sec_to_time(seconds):
-        if seconds is None or seconds == 0:
-            return '00:00:00'
-        hours = int(seconds // 3600)
-        minutes = int((seconds % 3600) // 60)
-        secs = int(seconds % 60)
-        return f'{hours:02d}:{minutes:02d}:{secs:02d}'
 
     data = []
     for row in results:
+        date_val = row[0]
+        total_dials = row[1] or 0
+        avg_talk = row[2] or 0
+        avg_followup = row[3] or 0
+        avg_handle = row[4] or 0
+        production_hours = row[5] or 0
+
+        def sec_to_time(seconds):
+            if seconds is None or seconds == 0:
+                return '00:00:00'
+            hours = int(seconds // 3600)
+            minutes = int((seconds % 3600) // 60)
+            secs = int(seconds % 60)
+            return f'{hours:02d}:{minutes:02d}:{secs:02d}'
+
         data.append({
-            'Date': row[0],
-            'Total Dials': row[1] or 0,
-            'OB Average Talk Time': sec_to_time(row[2]),
-            'OB Average Followup': sec_to_time(row[3]),
-            'OB Total Average Handle Time': sec_to_time(row[4]),
-            'Production Hours': round(float(row[5] or 0), 2)
+            'Date': date_val,
+            'Total Dials': total_dials,
+            'OB Average Talk Time': sec_to_time(avg_talk),
+            'OB Average Followup': sec_to_time(avg_followup),
+            'OB Total Average Handle Time': sec_to_time(avg_handle),
+            'Production Hours': round(production_hours, 2)
         })
+
     return data
 
 
@@ -82,43 +96,54 @@ def generate_excel(output_path=None):
         conn = get_connection()
         print("Conexion exitosa!\n")
 
+        print(f"Cargando template: {TEMPLATE_PATH}")
+        wb = load_workbook(TEMPLATE_PATH)
+
+        print("Procesando hoja: Service Level")
+        ws = wb['Service Level']
+
         sl_data = get_service_level_data(conn)
-        print(f"Registros obtenidos: {len(sl_data)}")
 
-        wb = Workbook()
-        ws = wb.active
-        ws.title = 'Service Level'
+        header_row = None
+        for row in range(1, 20):
+            if ws.cell(row, 1).value == 'Date':
+                header_row = row
+                break
 
-        headers = ['Date', 'Total Dials', 'OB Average Talk Time', 'OB Average Followup',
-                    'OB Total Average Handle Time', 'Production Hours']
-        header_font = Font(bold=True)
-        header_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
-        header_font_white = Font(bold=True, color='FFFFFF')
+        if header_row:
+            for row in range(header_row + 1, 100):
+                for col in range(1, 20):
+                    cell = ws.cell(row, col)
+                    if cell.value:
+                        cell.value = None
 
-        for col, header in enumerate(headers, 1):
-            cell = ws.cell(1, col, header)
-            cell.font = header_font_white
-            cell.fill = header_fill
-            cell.alignment = Alignment(horizontal='center')
+            data_row = header_row + 1
+            for record in sl_data:
+                ws.cell(data_row, 1).value = record['Date']
+                ws.cell(data_row, 2).value = record['Total Dials']
+                ws.cell(data_row, 3).value = record['OB Average Talk Time']
+                ws.cell(data_row, 4).value = record['OB Average Followup']
+                ws.cell(data_row, 5).value = record['OB Total Average Handle Time']
+                ph_cell = ws.cell(data_row, 6)
+                ph_cell.value = float(record['Production Hours'])
+                ph_cell.number_format = '0.00'
+                data_row += 1
 
-        for row_idx, record in enumerate(sl_data, 2):
-            ws.cell(row_idx, 1, record['Date'])
-            ws.cell(row_idx, 2, record['Total Dials'])
-            ws.cell(row_idx, 3, record['OB Average Talk Time'])
-            ws.cell(row_idx, 4, record['OB Average Followup'])
-            ws.cell(row_idx, 5, record['OB Total Average Handle Time'])
-            ph_cell = ws.cell(row_idx, 6, record['Production Hours'])
-            ph_cell.number_format = '0.00'
+            print(f"  Escritos {len(sl_data)} registros")
 
-        ws.column_dimensions['A'].width = 12
-        ws.column_dimensions['B'].width = 12
-        ws.column_dimensions['C'].width = 20
-        ws.column_dimensions['D'].width = 20
-        ws.column_dimensions['E'].width = 28
-        ws.column_dimensions['F'].width = 16
+        print("Eliminando hojas no necesarias...")
+        sheets_to_remove = []
+        for sheet_name in wb.sheetnames:
+            if sheet_name != 'Service Level':
+                sheets_to_remove.append(sheet_name)
 
-        wb.save(str(output_path))
+        for sheet_name in sheets_to_remove:
+            wb.remove(wb[sheet_name])
+            print(f"  Eliminada hoja: {sheet_name}")
+
+        wb.save(output_path)
         wb.close()
+
         print(f"\nExcel generado: {output_path}")
         return str(output_path)
 
