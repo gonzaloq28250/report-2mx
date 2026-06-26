@@ -20,19 +20,20 @@ class IccReportController(http.Controller):
         filename = report.file_name or 'report.xlsx'
         file_path = _REPORTS_DIR / filename
 
-        _logger.info('Download: %s (exists=%s)', file_path, file_path.exists())
-
         if not file_path.exists():
             return request.not_found()
 
-        with open(str(file_path), 'rb') as f:
-            file_data = f.read()
+        attachment = request.env['ir.attachment'].create({
+            'name': filename,
+            'type': 'binary',
+            'res_model': 'icc.report',
+            'res_id': report.id,
+        })
 
-        _logger.info('Serving %d bytes for %s', len(file_data), filename)
+        attachment.write({
+            'datas': open(str(file_path), 'rb').read(),
+        })
 
-        headers = [
-            ('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
-            ('Content-Disposition', 'attachment; filename="%s"' % filename),
-            ('Content-Length', str(len(file_data))),
-        ]
-        return request.make_response(file_data, headers)
+        return request.redirect(
+            '/web/content/ir.attachment/%d/datas' % attachment.id
+        )
