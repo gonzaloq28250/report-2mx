@@ -2,7 +2,7 @@ import base64
 import logging
 
 from odoo import http
-from odoo.http import request, Response
+from odoo.http import request
 
 _logger = logging.getLogger(__name__)
 
@@ -26,12 +26,10 @@ class IccReportController(http.Controller):
         if filename.endswith('.txt'):
             content_type = 'text/plain'
 
-        return Response(
-            body=file_data,
-            headers=[
-                ('Content-Type', content_type),
-                ('Content-Disposition', 'attachment; filename="%s"' % filename),
-                ('Content-Length', str(len(file_data))),
-                ('Cache-Control', 'no-cache'),
-            ],
-        )
+        headers = [
+            ('Content-Type', content_type),
+            ('Content-Disposition', 'attachment; filename="%s"' % filename),
+            ('Content-Length', str(len(file_data))),
+            ('Cache-Control', 'no-cache'),
+        ]
+        return request.make_response(file_data, headers)
