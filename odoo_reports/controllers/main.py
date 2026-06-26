@@ -3,10 +3,10 @@ from pathlib import Path
 
 from odoo import http
 from odoo.http import request
+from werkzeug.wrappers import Response as WerkzeugResponse
 
 _logger = logging.getLogger(__name__)
 
-# Same path as the model uses
 _REPORTS_DIR = Path(__file__).resolve().parent.parent.parent / 'reports'
 
 
@@ -25,17 +25,23 @@ class IccReportController(http.Controller):
         if not file_path.exists():
             return request.not_found()
 
-        with open(file_path, 'rb') as f:
-            file_data = f.read()
+        def generate():
+            with open(file_path, 'rb') as f:
+                while True:
+                    chunk = f.read(8192)
+                    if not chunk:
+                        break
+                    yield chunk
 
         content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         if filename.endswith('.txt'):
             content_type = 'text/plain'
 
-        headers = [
-            ('Content-Type', content_type),
-            ('Content-Disposition', 'attachment; filename="%s"' % filename),
-            ('Content-Length', str(len(file_data))),
-            ('Cache-Control', 'no-cache'),
-        ]
-        return request.make_response(file_data, headers)
+        return WerkzeugResponse(
+            generate(),
+            content_type=content_type,
+            headers={
+                'Content-Disposition': 'attachment; filename="%s"' % filename,
+                'Cache-Control': 'no-cache',
+            },
+        )
