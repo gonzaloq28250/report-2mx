@@ -3,6 +3,7 @@ from pathlib import Path
 
 from odoo import http
 from odoo.http import request
+from werkzeug.utils import send_file
 
 _logger = logging.getLogger(__name__)
 
@@ -23,15 +24,9 @@ class IccReportController(http.Controller):
         if not file_path.exists():
             return request.not_found()
 
-        file_data = file_path.read_bytes()
-
-        content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        if filename.endswith('.txt'):
-            content_type = 'text/plain'
-
-        headers = [
-            ('Content-Type', content_type),
-            ('Content-Disposition', 'attachment; filename="%s"' % filename),
-            ('Content-Length', len(file_data)),
-        ]
-        return request.make_response(file_data, headers)
+        return send_file(
+            str(file_path),
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=filename,
+        )
