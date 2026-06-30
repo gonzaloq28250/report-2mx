@@ -6,7 +6,7 @@ Solo hoja Service Level con Production Hours
 import mysql.connector
 from datetime import datetime
 from pathlib import Path
-from py.xlsx_utils import safe_save, load_template
+from xlsx_utils import safe_save, load_template
 import sys
 import os
 

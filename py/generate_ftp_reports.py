@@ -6,7 +6,7 @@ Generar reportes XLSX desde tablas MySQL usando templates
 - Genera reporte en sheet Template
 """
 import mysql.connector
-from py.xlsx_utils import safe_save, load_template
+from xlsx_utils import safe_save, load_template
 from openpyxl.utils import get_column_letter
 from pathlib import Path
 from datetime import datetime

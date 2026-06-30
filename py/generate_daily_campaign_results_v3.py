@@ -10,7 +10,7 @@ import mysql.connector
 from pathlib import Path
 from datetime import datetime
 import pandas as pd
-from py.xlsx_utils import safe_save, load_template
+from xlsx_utils import safe_save, load_template
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import PatternFill, Font, Border, Side, Alignment, numbers
 from copy import copy

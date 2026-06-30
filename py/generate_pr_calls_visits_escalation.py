@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import mysql.connector
-from py.xlsx_utils import safe_save, load_template
+from xlsx_utils import safe_save, load_template
 from openpyxl.styles import PatternFill, Border, Alignment, Font
 from pathlib import Path
 from datetime import datetime
