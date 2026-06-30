@@ -115,7 +115,7 @@ def resolve_db_field(report_col, mapping, existing_columns):
                 break
 
     if not found:
-        return db_field_raw
+        return None
     return found
 
 
@@ -197,4 +197,10 @@ def generate_excel():
 
 
 if __name__ == '__main__':
-    generate_excel()
+    try:
+        generate_excel()
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)

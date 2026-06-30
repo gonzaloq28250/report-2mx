@@ -123,7 +123,7 @@ def resolve_db_field(report_col, mapping, existing_columns):
                 break
 
     if not found:
-        return db_field_raw
+        return None
     return found
 
 
@@ -209,7 +209,7 @@ if __name__ == '__main__':
         print(f"Archivo: {output_path}")
         print(f"Total registros: {count}")
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error: {e}", file=sys.stderr)
         import traceback
         traceback.print_exc()
         sys.exit(1)
