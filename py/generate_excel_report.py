@@ -1,12 +1,12 @@
 """
 Generar Service-Level-Report.xlsx desde MySQL para ICC Amex
-Solo hoja Service Level con Production Hours
+Copia template como archivo raw, luego escribe datos con pandas+openpyxl
 """
 
 import mysql.connector
-from datetime import datetime
+import shutil
+import pandas as pd
 from pathlib import Path
-from xlsx_utils import safe_save, load_template
 import sys
 import os
 
@@ -22,7 +22,6 @@ def get_connection():
 
 
 def get_service_level_data(conn):
-    """Obtener datos para la hoja Service Level"""
     cursor = conn.cursor()
 
     query = """
@@ -52,19 +51,10 @@ def get_service_level_data(conn):
     cursor.execute(query)
     results = cursor.fetchall()
     print(f"Registros obtenidos: {len(results)}")
-    if results:
-        print(f"Primera fila: {results[0]}")
     cursor.close()
 
     data = []
     for row in results:
-        date_val = row[0]
-        total_dials = row[1] or 0
-        avg_talk = row[2] or 0
-        avg_followup = row[3] or 0
-        avg_handle = row[4] or 0
-        production_hours = row[5] or 0
-
         def sec_to_time(seconds):
             if seconds is None or seconds == 0:
                 return '00:00:00'
@@ -74,12 +64,12 @@ def get_service_level_data(conn):
             return f'{hours:02d}:{minutes:02d}:{secs:02d}'
 
         data.append({
-            'Date': date_val,
-            'Total Dials': total_dials,
-            'OB Average Talk Time': sec_to_time(avg_talk),
-            'OB Average Followup': sec_to_time(avg_followup),
-            'OB Total Average Handle Time': sec_to_time(avg_handle),
-            'Production Hours': round(production_hours, 2)
+            'Date': row[0],
+            'Total Dials': row[1] or 0,
+            'OB Average Talk Time': sec_to_time(row[2]),
+            'OB Average Followup': sec_to_time(row[3]),
+            'OB Total Average Handle Time': sec_to_time(row[4]),
+            'Production Hours': round(row[5] or 0, 2)
         })
 
     return data
@@ -92,56 +82,28 @@ def generate_excel(output_path=None):
         output_path = OUTPUT_PATH
 
     try:
-        print("Conectando a MySQL...")
         conn = get_connection()
-        print("Conexion exitosa!\n")
-
-        print(f"Cargando template: {TEMPLATE_PATH}")
-        wb = load_template(TEMPLATE_PATH)
-
-        print("Procesando hoja: Service Level")
-        ws = wb['Service Level']
 
         sl_data = get_service_level_data(conn)
+        df = pd.DataFrame(sl_data)
 
-        header_row = None
-        for row in range(1, 20):
-            if ws.cell(row, 1).value == 'Date':
-                header_row = row
-                break
+        output_dir = os.path.dirname(output_path)
+        os.makedirs(output_dir, exist_ok=True)
 
-        if header_row:
-            for row in range(header_row + 1, 100):
-                for col in range(1, 20):
-                    cell = ws.cell(row, col)
-                    if cell.value:
-                        cell.value = None
+        with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
+            df.to_excel(writer, sheet_name='Service Level', index=False, startrow=1)
 
-            data_row = header_row + 1
-            for record in sl_data:
-                ws.cell(data_row, 1).value = record['Date']
-                ws.cell(data_row, 2).value = record['Total Dials']
-                ws.cell(data_row, 3).value = record['OB Average Talk Time']
-                ws.cell(data_row, 4).value = record['OB Average Followup']
-                ws.cell(data_row, 5).value = record['OB Total Average Handle Time']
-                ph_cell = ws.cell(data_row, 6)
-                ph_cell.value = float(record['Production Hours'])
-                ph_cell.number_format = '0.00'
-                data_row += 1
+            workbook = writer.book
+            worksheet = writer.sheets['Service Level']
 
-            print(f"  Escritos {len(sl_data)} registros")
+            header_fmt = workbook.add_format({'bold': True, 'border': 1})
+            for col_num, col_name in enumerate(df.columns):
+                worksheet.write(0, col_num, col_name, header_fmt)
 
-        print("Eliminando hojas no necesarias...")
-        sheets_to_remove = []
-        for sheet_name in wb.sheetnames:
-            if sheet_name != 'Service Level':
-                sheets_to_remove.append(sheet_name)
-
-        for sheet_name in sheets_to_remove:
-            wb.remove(wb[sheet_name])
-            print(f"  Eliminada hoja: {sheet_name}")
-
-        safe_save(wb, output_path)
+            worksheet.set_column('A:A', 12)
+            worksheet.set_column('B:B', 12)
+            worksheet.set_column('C:E', 20)
+            worksheet.set_column('F:F', 16)
 
         print(f"\nExcel generado: {output_path}")
         return str(output_path)
@@ -152,7 +114,6 @@ def generate_excel(output_path=None):
     finally:
         if 'conn' in locals():
             conn.close()
-            print("Conexion cerrada")
 
 
 if __name__ == "__main__":
