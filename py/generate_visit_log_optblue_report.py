@@ -137,17 +137,21 @@ def generate_excel():
     print(f"Columnas en tabla: {len(existing_columns)}")
 
     col_map = {}
+    entry_date_field = None
     for hdr in template_headers:
         if hdr in match_mapping:
             resolved = resolve_db_field(hdr, match_mapping, existing_columns)
             if resolved:
                 col_map[hdr] = resolved
+                if hdr == 'Entry_DateSubmitted':
+                    entry_date_field = resolved
 
     db_fields = list(col_map.values())
     rows, field_names = get_data_from_db(db_fields, table_name)
     print(f"Filas obtenidas: {len(rows)}")
 
     field_index = {name: idx for idx, name in enumerate(field_names)}
+    entry_date_idx = field_index.get(entry_date_field) if entry_date_field else None
 
     output_dir = os.path.dirname(output_path)
     os.makedirs(output_dir, exist_ok=True)
@@ -172,7 +176,13 @@ def generate_excel():
         data_row = header_row
         for row_data in rows:
             for col_num, hdr in enumerate(template_headers):
-                if hdr in col_map:
+                if hdr == 'Month' and entry_date_idx is not None:
+                    val = row_data[entry_date_idx]
+                    value = val.month if isinstance(val, datetime) else ''
+                elif hdr == 'Year' and entry_date_idx is not None:
+                    val = row_data[entry_date_idx]
+                    value = val.year if isinstance(val, datetime) else ''
+                elif hdr in col_map:
                     db_field = col_map[hdr]
                     idx = field_index.get(db_field)
                     value = row_data[idx] if idx is not None and idx < len(row_data) else ''
