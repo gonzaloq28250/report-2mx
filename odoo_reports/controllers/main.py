@@ -26,7 +26,7 @@ class IccReportController(http.Controller):
         with open(str(file_path), 'rb') as f:
             file_data = f.read()
 
-        response = request.make_response(file_data, [
+        headers = [
             ('Content-Type', 'application/octet-stream'),
             ('Content-Disposition', 'attachment; filename="%s"' % filename),
             ('Content-Length', len(file_data)),
@@ -34,5 +34,23 @@ class IccReportController(http.Controller):
             ('Cache-Control', 'no-cache, no-store, must-revalidate'),
             ('Pragma', 'no-cache'),
             ('Expires', '0'),
-        ])
-        return response
+        ]
+        return request.make_response(file_data, headers)
+
+    @http.route('/icc/report/test/<filename>', type='http', auth='user', methods=['GET'])
+    def test_download(self, filename, **kwargs):
+        """Test endpoint: download any file from reports/ by name"""
+        file_path = _REPORTS_DIR / filename
+        if not file_path.exists():
+            return request.not_found()
+
+        with open(str(file_path), 'rb') as f:
+            file_data = f.read()
+
+        headers = [
+            ('Content-Type', 'application/octet-stream'),
+            ('Content-Disposition', 'attachment; filename="%s"' % filename),
+            ('Content-Length', len(file_data)),
+            ('Content-Encoding', 'identity'),
+        ]
+        return request.make_response(file_data, headers)
