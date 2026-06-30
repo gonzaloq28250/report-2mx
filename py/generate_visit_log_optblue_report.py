@@ -177,6 +177,7 @@ def generate_excel():
             'border': 1, 'text_wrap': True, 'valign': 'vcenter'
         })
         data_fmt = workbook.add_format({'valign': 'vcenter'})
+        date_fmt = workbook.add_format({'valign': 'vcenter', 'num_format': 'yyyy-mm-dd hh:mm:ss'})
 
         for col_num, hdr in enumerate(template_headers):
             worksheet.write(header_row - 1, col_num, hdr, header_fmt)
@@ -194,7 +195,7 @@ def generate_excel():
                     value = entry_date_val.year if isinstance(entry_date_val, datetime) else ''
                 elif hdr == 'Entry_DateSubmitted' and entry_date_val:
                     if isinstance(entry_date_val, datetime):
-                        worksheet.write_datetime(data_row, col_num, entry_date_val, data_fmt)
+                        worksheet.write_datetime(data_row, col_num, entry_date_val, date_fmt)
                     else:
                         worksheet.write(data_row, col_num, str(entry_date_val) if entry_date_val else '', data_fmt)
                     continue
@@ -208,7 +209,7 @@ def generate_excel():
                 if value is None:
                     value = ''
                 elif isinstance(value, datetime):
-                    worksheet.write_datetime(data_row, col_num, value, data_fmt)
+                    worksheet.write_datetime(data_row, col_num, value, date_fmt)
                     continue
                 elif isinstance(value, (int, float)):
                     pass

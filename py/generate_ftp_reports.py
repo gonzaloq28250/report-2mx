@@ -241,6 +241,7 @@ def generate_report(template_name, csv_filename, conn):
             'border': 1, 'text_wrap': True, 'valign': 'vcenter'
         })
         data_fmt = workbook.add_format({'valign': 'vcenter'})
+        date_fmt = workbook.add_format({'valign': 'vcenter', 'num_format': 'yyyy-mm-dd hh:mm:ss'})
 
         for col_num, hdr in enumerate(template_headers):
             worksheet.write(0, col_num, hdr, header_fmt)
@@ -267,7 +268,7 @@ def generate_report(template_name, csv_filename, conn):
                     value = ''
 
                 if isinstance(value, datetime):
-                    worksheet.write_datetime(data_row, col_num, value, data_fmt)
+                    worksheet.write_datetime(data_row, col_num, value, date_fmt)
                 elif isinstance(value, (int, float)):
                     worksheet.write(data_row, col_num, value, data_fmt)
                 else:
