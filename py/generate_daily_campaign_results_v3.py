@@ -10,7 +10,7 @@ import mysql.connector
 from pathlib import Path
 from datetime import datetime
 import pandas as pd
-from openpyxl import load_workbook
+from py.xlsx_utils import safe_save, load_template
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import PatternFill, Font, Border, Side, Alignment, numbers
 from copy import copy
@@ -1063,7 +1063,7 @@ def generate_daily_campaign_results_v3():
 
         # Cargar template v2
         print(f"Cargando template v2: {TEMPLATE_PATH}")
-        wb = load_workbook(TEMPLATE_PATH)
+        wb = load_template(TEMPLATE_PATH)
 
         # Llenar Summary
         if 'Summary' in wb.sheetnames:
@@ -1087,8 +1087,7 @@ def generate_daily_campaign_results_v3():
 
         # Guardar
         output_path = config.OUTPUT_FILES['daily_campaign']
-        wb.save(output_path)
-        wb.close()
+        safe_save(wb, output_path)
 
         print(f"\n[OK] Excel generado: {output_path}")
         print(f"  Hojas incluidas: Summary, Campaign Summary, {len(campaign_names)} hojas de campana")

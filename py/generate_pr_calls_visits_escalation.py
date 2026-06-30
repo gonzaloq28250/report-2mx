@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import mysql.connector
-from openpyxl import load_workbook
+from py.xlsx_utils import safe_save, load_template
 from openpyxl.styles import PatternFill, Border, Alignment, Font
 from pathlib import Path
 from datetime import datetime
@@ -59,7 +59,7 @@ def get_data_from_db(from_date=None, to_date=None):
 
 def generate_excel(from_date=None, to_date=None):
     print(f"Template: {TEMPLATE_PATH}")
-    wb = load_workbook(TEMPLATE_PATH)
+    wb = load_template(TEMPLATE_PATH)
     existing_columns = get_table_columns()
     print(f"Columnas en tabla: {len(existing_columns)}")
 
@@ -124,7 +124,7 @@ def generate_excel(from_date=None, to_date=None):
         if sn != target_name:
             wb.remove(wb[sn])
 
-    wb.save(OUTPUT_PATH)
+    safe_save(wb, OUTPUT_PATH)
     print(f"Excel generado: {OUTPUT_PATH}")
     return OUTPUT_PATH
 

@@ -6,7 +6,7 @@ Solo hoja Service Level con Production Hours
 import mysql.connector
 from datetime import datetime
 from pathlib import Path
-from openpyxl import load_workbook
+from py.xlsx_utils import safe_save, load_template
 import sys
 import os
 
@@ -97,7 +97,7 @@ def generate_excel(output_path=None):
         print("Conexion exitosa!\n")
 
         print(f"Cargando template: {TEMPLATE_PATH}")
-        wb = load_workbook(TEMPLATE_PATH)
+        wb = load_template(TEMPLATE_PATH)
 
         print("Procesando hoja: Service Level")
         ws = wb['Service Level']
@@ -141,8 +141,7 @@ def generate_excel(output_path=None):
             wb.remove(wb[sheet_name])
             print(f"  Eliminada hoja: {sheet_name}")
 
-        wb.save(output_path)
-        wb.close()
+        safe_save(wb, output_path)
 
         print(f"\nExcel generado: {output_path}")
         return str(output_path)

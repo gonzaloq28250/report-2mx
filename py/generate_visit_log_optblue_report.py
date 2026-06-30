@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import mysql.connector
-from openpyxl import load_workbook
+from py.xlsx_utils import safe_save, load_template
 from openpyxl.styles import Font, PatternFill, Border, Alignment
 from pathlib import Path
 from datetime import datetime
@@ -88,7 +88,7 @@ def generate_excel():
     output_path = config.OUTPUT_FILES['visit_log_optblue']
 
     print(f"Template: {template_path}")
-    wb = load_workbook(template_path)
+    wb = load_template(template_path)
 
     conn = mysql.connector.connect(**config.MYSQL_CONFIG)
     cursor = conn.cursor()
@@ -159,8 +159,7 @@ def generate_excel():
         if sheet_name != 'Template':
             wb.remove(wb[sheet_name])
 
-    wb.save(output_path)
-    wb.close()
+    safe_save(wb, output_path)
     print(f"Excel generado: {output_path}")
     return output_path
 

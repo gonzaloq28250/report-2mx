@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import mysql.connector
-from openpyxl import load_workbook
+from py.xlsx_utils import safe_save, load_template
 from openpyxl.styles import Font, PatternFill, Border, Alignment
 from pathlib import Path
 from datetime import datetime
@@ -105,7 +105,7 @@ def get_data_from_db(db_fields, table_name):
 def generate_excel():
     table_name = 'pr_calls_duration_report'
     print(f"Template: {TEMPLATE_PATH}")
-    wb = load_workbook(TEMPLATE_PATH)
+    wb = load_template(TEMPLATE_PATH)
 
     conn = mysql.connector.connect(**config.MYSQL_CONFIG)
     cursor = conn.cursor()
@@ -163,8 +163,7 @@ def generate_excel():
         if sheet_name != target_sheet:
             wb.remove(wb[sheet_name])
 
-    wb.save(OUTPUT_PATH)
-    wb.close()
+    safe_save(wb, OUTPUT_PATH)
     print(f"Excel generado: {OUTPUT_PATH}")
     return OUTPUT_PATH, len(rows)
 

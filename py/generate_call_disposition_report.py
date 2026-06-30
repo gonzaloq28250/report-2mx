@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import mysql.connector
-from openpyxl import load_workbook
+from py.xlsx_utils import safe_save, load_template
 from openpyxl.styles import Font, PatternFill, Border, Alignment
 from openpyxl.styles.numbers import is_date_format as _is_date_format
 from datetime import datetime
@@ -45,7 +45,7 @@ def get_db_data(cursor, db_fields, table_name):
 def generate_excel():
     table_name = 'call_disposition_report'
     print(f"Template: {TEMPLATE_PATH}")
-    wb = load_workbook(TEMPLATE_PATH)
+    wb = load_template(TEMPLATE_PATH)
 
     if TARGET_SHEET not in wb.sheetnames:
         raise ValueError(f"El template no tiene sheet '{TARGET_SHEET}'")
@@ -188,8 +188,7 @@ def generate_excel():
     for sheet_name in sheets_to_remove:
         wb.remove(wb[sheet_name])
 
-    wb.save(OUTPUT_PATH)
-    wb.close()
+    safe_save(wb, OUTPUT_PATH)
     print(f"Excel generado: {OUTPUT_PATH}")
     return OUTPUT_PATH, len(rows)
 

@@ -6,7 +6,7 @@ Generar reportes XLSX desde tablas MySQL usando templates
 - Genera reporte en sheet Template
 """
 import mysql.connector
-from openpyxl import load_workbook
+from py.xlsx_utils import safe_save, load_template
 from openpyxl.utils import get_column_letter
 from pathlib import Path
 from datetime import datetime
@@ -175,7 +175,7 @@ def read_match_sheet(template_path):
     Retorna: {report_column_name: csv_column_index}
     El indice base es 1 (primera columna del CSV)
     """
-    wb = load_workbook(template_path, data_only=False)
+    wb = load_template(template_path, data_only=False)
 
     if 'Match' not in wb.sheetnames:
         wb.close()
@@ -215,7 +215,7 @@ def read_match_sheet_with_mysql_columns(template_path):
     Retorna: {report_column_name: mysql_column_name}
     Lee la columna C del sheet Match que contiene el nombre de la columna en MySQL
     """
-    wb = load_workbook(template_path, data_only=False)
+    wb = load_template(template_path, data_only=False)
 
     if 'Match' not in wb.sheetnames:
         wb.close()
@@ -260,7 +260,7 @@ def get_template_headers(template_path):
     Leer headers del sheet Template (fila 1)
     Retorna lista de nombres de columnas en orden
     """
-    wb = load_workbook(template_path, data_only=False)
+    wb = load_template(template_path, data_only=False)
     ws = wb['Template']
 
     headers = []
@@ -434,7 +434,7 @@ def generate_report(template_name, csv_filename, conn):
     print(f"  Filas obtenidas: {len(rows)}")
 
     # Cargar template
-    wb = load_workbook(template_path)
+    wb = load_template(template_path)
     template_ws = wb['Template']
 
     # ELIMINAR todos los sheets excepto Template
@@ -545,8 +545,7 @@ def generate_report(template_name, csv_filename, conn):
     output_filename = f"{template_name.replace('.xlsx', '')}-{timestamp}.xlsx"
     output_path = OUTPUT_DIR / output_filename
 
-    wb.save(output_path)
-    wb.close()
+    safe_save(wb, output_path)
 
     print(f"  [OK] Reporte generado: {output_path}")
 
