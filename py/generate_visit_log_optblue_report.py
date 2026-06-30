@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 import mysql.connector
-from xlsx_utils import safe_save, load_template
-from openpyxl.styles import Font, PatternFill, Border, Alignment
-from pathlib import Path
+import pandas as pd
+from openpyxl import load_workbook
 from datetime import datetime
+from pathlib import Path
 import sys
 import os
-import shutil
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import config
@@ -21,44 +20,44 @@ def sanitize_field_name(field_name):
     return field
 
 
-def read_match_mapping(wb, existing_columns):
+def read_template_info(template_path):
+    wb = load_workbook(template_path, read_only=True)
+
     if 'Match' not in wb.sheetnames:
         raise ValueError("El template no tiene un sheet llamado 'Match'")
-    ws = wb['Match']
+
+    ws_match = wb['Match']
     mapping = {}
-    col_lower = {k: v for k, v in existing_columns.items()}
-
-    for row in range(2, ws.max_row + 1):
-        report_col = ws.cell(row, 1).value
-        db_field = ws.cell(row, 3).value
+    for row in range(2, ws_match.max_row + 1):
+        report_col = ws_match.cell(row, 1).value
+        db_field = ws_match.cell(row, 3).value
         if report_col and db_field:
-            report_col = str(report_col).strip()
-            db_field_raw = str(db_field).strip()
-            sanitized_db = sanitize_field_name(db_field_raw)
+            mapping[str(report_col).strip()] = str(db_field).strip()
 
-            found = col_lower.get(sanitized_db)
-            if not found:
-                for lk, lv in col_lower.items():
-                    if sanitized_db == lk.replace(' ', '_').replace('-', '_'):
-                        found = lv
-                        break
-            if not found:
-                import re
-                base = re.sub(r'_\d+$', '', sanitized_db)
-                for lk, lv in col_lower.items():
-                    if base == re.sub(r'_\d+$', '', lk.replace(' ', '_').replace('-', '_')):
-                        found = lv
-                        break
-            if not found:
-                clean_db = sanitized_db.replace('_', '')
-                for lk, lv in col_lower.items():
-                    clean_col = lk.replace('_', '').replace(' ', '')
-                    if clean_db == clean_col or (len(clean_db) > 3 and clean_db in clean_col):
-                        found = lv
-                        break
-            if found:
-                mapping[report_col] = found
-    return mapping
+    if 'Template' not in wb.sheetnames:
+        raise ValueError("El template no tiene un sheet llamado 'Template'")
+
+    ws = wb['Template']
+
+    header_row = None
+    for row in range(1, 20):
+        val = ws.cell(row, 1).value
+        if val and 'Visitas' in str(val):
+            header_row = row
+            break
+    if not header_row:
+        header_row = 1
+
+    headers = []
+    for col in range(1, 200):
+        val = ws.cell(header_row, col).value
+        if val:
+            headers.append(str(val).strip())
+        else:
+            break
+
+    wb.close()
+    return mapping, headers, header_row
 
 
 def get_table_columns(cursor, table_name):
@@ -77,9 +76,47 @@ def get_data_from_db(db_fields, table_name):
     query = f"SELECT {fields_str} FROM `{table_name}` ORDER BY id DESC"
     cursor.execute(query)
     rows = cursor.fetchall()
+    field_names = [d[0] for d in cursor.description]
     cursor.close()
     conn.close()
-    return rows, valid_fields
+    return rows, field_names
+
+
+def resolve_db_field(report_col, mapping, existing_columns):
+    db_field_raw = mapping.get(report_col)
+    if not db_field_raw:
+        return None
+
+    import re
+    sanitized = sanitize_field_name(db_field_raw)
+    if not sanitized:
+        return None
+
+    col_lower = {k: v for k, v in existing_columns.items()}
+
+    found = col_lower.get(sanitized)
+    if not found:
+        for lk, lv in col_lower.items():
+            if sanitized == lk.replace(' ', '_').replace('-', '_'):
+                found = lv
+                break
+    if not found:
+        base = re.sub(r'_\d+$', '', sanitized)
+        for lk, lv in col_lower.items():
+            if base == re.sub(r'_\d+$', '', lk.replace(' ', '_').replace('-', '_')):
+                found = lv
+                break
+    if not found:
+        clean_db = sanitized.replace('_', '')
+        for lk, lv in col_lower.items():
+            clean_col = lk.replace('_', '').replace(' ', '')
+            if clean_db == clean_col or (len(clean_db) > 3 and clean_db in clean_col):
+                found = lv
+                break
+
+    if not found:
+        return db_field_raw
+    return found
 
 
 def generate_excel():
@@ -88,7 +125,9 @@ def generate_excel():
     output_path = config.OUTPUT_FILES['visit_log_optblue']
 
     print(f"Template: {template_path}")
-    wb = load_template(template_path)
+
+    match_mapping, template_headers, header_row = read_template_info(template_path)
+    print(f"Mapeo Match: {len(match_mapping)} columnas")
 
     conn = mysql.connector.connect(**config.MYSQL_CONFIG)
     cursor = conn.cursor()
@@ -97,69 +136,62 @@ def generate_excel():
     conn.close()
     print(f"Columnas en tabla: {len(existing_columns)}")
 
-    match_mapping = read_match_mapping(wb, existing_columns)
-    print(f"Mapeo Match: {len(match_mapping)} columnas")
-    db_fields = list(match_mapping.values())
-    rows, valid_fields = get_data_from_db(db_fields, table_name)
+    col_map = {}
+    for hdr in template_headers:
+        if hdr in match_mapping:
+            resolved = resolve_db_field(hdr, match_mapping, existing_columns)
+            if resolved:
+                col_map[hdr] = resolved
+
+    db_fields = list(col_map.values())
+    rows, field_names = get_data_from_db(db_fields, table_name)
     print(f"Filas obtenidas: {len(rows)}")
 
-    if 'Template' not in wb.sheetnames:
-        raise ValueError("El template no tiene un sheet llamado 'Template'")
-    ws = wb['Template']
+    field_index = {name: idx for idx, name in enumerate(field_names)}
 
-    header_row = None
-    for row in range(1, ws.max_row + 1):
-        if ws.cell(row, 1).value and 'Visitas' in str(ws.cell(row, 1).value):
-            header_row = row
-            break
-    if not header_row:
-        header_row = 1
+    output_dir = os.path.dirname(output_path)
+    os.makedirs(output_dir, exist_ok=True)
 
-    col_mapping = {}
-    max_col = ws.max_column if ws.max_column > 50 else 100
-    for col in range(1, max_col + 1):
-        header_value = ws.cell(header_row, col).value
-        if header_value:
-            header_str = str(header_value).strip()
-            if header_str in match_mapping:
-                col_mapping[match_mapping[header_str]] = col
+    sheet_title = 'Template'
+    with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
+        df = pd.DataFrame(columns=template_headers)
+        df.to_excel(writer, sheet_name=sheet_title, index=False, startrow=header_row - 1)
 
-    data_start_row = header_row + 1
-    for row in range(data_start_row, ws.max_row + 1):
-        for col in range(1, ws.max_column + 1):
-            ws.cell(row, col).value = None
+        workbook = writer.book
+        worksheet = writer.sheets[sheet_title]
 
-    for row_idx, row_data in enumerate(rows, start=data_start_row):
-        for col_idx, db_field in enumerate(valid_fields):
-            if db_field in col_mapping:
-                excel_col = col_mapping[db_field]
-                cell = ws.cell(row_idx, excel_col)
-                value = row_data[col_idx]
-                if isinstance(value, datetime):
-                    cell.value = value
-                elif isinstance(value, (int, float)):
-                    cell.value = value
+        header_fmt = workbook.add_format({
+            'bold': True, 'bg_color': '#4472C4', 'font_color': '#FFFFFF',
+            'border': 1, 'text_wrap': True, 'valign': 'vcenter'
+        })
+        data_fmt = workbook.add_format({'valign': 'vcenter'})
+
+        for col_num, hdr in enumerate(template_headers):
+            worksheet.write(header_row - 1, col_num, hdr, header_fmt)
+
+        data_row = header_row
+        for row_data in rows:
+            for col_num, hdr in enumerate(template_headers):
+                if hdr in col_map:
+                    db_field = col_map[hdr]
+                    idx = field_index.get(db_field)
+                    value = row_data[idx] if idx is not None and idx < len(row_data) else ''
                 else:
-                    cell.value = str(value) if value else None
+                    value = ''
 
-    clean_font = Font()
-    clean_fill = PatternFill(fill_type=None)
-    clean_border = Border()
-    clean_alignment = Alignment(horizontal='left', vertical='center')
-    for row in range(data_start_row, ws.max_row + 1):
-        for col in range(1, ws.max_column + 1):
-            cell = ws.cell(row, col)
-            if cell.value is not None:
-                cell.font = clean_font
-                cell.fill = clean_fill
-                cell.border = clean_border
-                cell.alignment = clean_alignment
+                if value is None:
+                    value = ''
+                elif isinstance(value, datetime):
+                    worksheet.write_datetime(data_row, col_num, value, data_fmt)
+                    continue
+                elif isinstance(value, (int, float)):
+                    pass
+                else:
+                    value = str(value) if value else ''
 
-    for sheet_name in wb.sheetnames:
-        if sheet_name != 'Template':
-            wb.remove(wb[sheet_name])
+                worksheet.write(data_row, col_num, value, data_fmt)
+            data_row += 1
 
-    safe_save(wb, output_path)
     print(f"Excel generado: {output_path}")
     return output_path
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 import mysql.connector
-from xlsx_utils import safe_save, load_template
-from openpyxl.styles import Font, PatternFill, Border, Alignment
-from openpyxl.styles.numbers import is_date_format as _is_date_format
-from pathlib import Path
+import pandas as pd
+from openpyxl import load_workbook
+from openpyxl.utils import get_column_letter
 from datetime import datetime
+from pathlib import Path
 import sys
 import os
 
@@ -15,9 +15,9 @@ import config
 def sanitize_field_name(field_name):
     if not field_name:
         return None
+    import re
     field = field_name.strip().lower()
     field = field.replace(' ', '_').replace('-', '_')
-    import re
     field = re.sub(r'[^\w]', '', field)
     return field
 
@@ -33,61 +33,41 @@ CALCULATED_FIELDS = {
 }
 
 
-def read_match_mapping(wb, existing_columns):
+def read_template_info(template_path):
+    wb = load_workbook(template_path, read_only=True)
+
     if 'Match' not in wb.sheetnames:
         raise ValueError("El template no tiene un sheet llamado 'Match'")
 
-    ws = wb['Match']
+    ws_match = wb['Match']
     mapping = {}
     defaults = {}
-    col_lower = {k: v for k, v in existing_columns.items()}
-
-    for row in range(2, ws.max_row + 1):
-        report_col = ws.cell(row, 1).value
-        db_field = ws.cell(row, 3).value
-        default_val = ws.cell(row, 4).value
-
+    for row in range(2, ws_match.max_row + 1):
+        report_col = ws_match.cell(row, 1).value
+        db_field = ws_match.cell(row, 3).value
+        default_val = ws_match.cell(row, 4).value
         if not report_col:
             break
         report_col = str(report_col).strip()
-
         if isinstance(default_val, str) and default_val.strip():
             defaults[report_col] = default_val.strip()
-
         if db_field:
-            db_field_raw = str(db_field).strip()
-            db_field_lower = db_field_raw.lower().replace(' ', '')
+            mapping[report_col] = str(db_field).strip()
 
-            if db_field_lower in CALCULATED_FIELDS:
-                mapping[report_col] = CALCULATED_FIELDS[db_field_lower]
-                continue
+    if 'Template' not in wb.sheetnames:
+        raise ValueError("El template no tiene un sheet llamado 'Template'")
 
-            sanitized_db = sanitize_field_name(db_field_raw)
+    ws = wb['Template']
+    headers = []
+    for col in range(1, 200):
+        val = ws.cell(1, col).value
+        if val:
+            headers.append(str(val).strip())
+        else:
+            break
 
-            found = col_lower.get(sanitized_db)
-            if not found:
-                for lk, lv in col_lower.items():
-                    if sanitized_db == lk.replace(' ', '_').replace('-', '_'):
-                        found = lv
-                        break
-            if not found:
-                base = strip_numeric_suffix(sanitized_db)
-                for lk, lv in col_lower.items():
-                    if base == strip_numeric_suffix(lk.replace(' ', '_').replace('-', '_')):
-                        found = lv
-                        break
-            if not found:
-                clean_db = sanitized_db.replace('_', '')
-                for lk, lv in col_lower.items():
-                    clean_col = lk.replace('_', '').replace(' ', '')
-                    if clean_db == clean_col or (len(clean_db) > 3 and clean_db in clean_col):
-                        found = lv
-                        break
-
-            if found:
-                mapping[report_col] = found
-
-    return mapping, defaults
+    wb.close()
+    return mapping, defaults, headers
 
 
 def get_table_columns(cursor, table_name):
@@ -114,12 +94,46 @@ def get_data_from_db(db_fields, table_name):
     """
     cursor.execute(query)
     rows = cursor.fetchall()
+    field_names = [d[0] for d in cursor.description]
     cursor.close()
     conn.close()
 
-    # Append calculated field values to each row
-    extended_fields = real_fields + ['__month__', '__year__']
-    return rows, extended_fields
+    return rows, field_names
+
+
+def resolve_db_field(report_col, mapping, existing_columns):
+    db_field_raw = mapping.get(report_col)
+    if not db_field_raw:
+        return None, None
+
+    db_field_lower = db_field_raw.lower().replace(' ', '')
+    if db_field_lower in CALCULATED_FIELDS:
+        return CALCULATED_FIELDS[db_field_lower], None
+
+    sanitized = sanitize_field_name(db_field_raw)
+    col_lower = {k: v for k, v in existing_columns.items()}
+
+    found = col_lower.get(sanitized)
+    if not found:
+        for lk, lv in col_lower.items():
+            if sanitized == lk.replace(' ', '_').replace('-', '_'):
+                found = lv
+                break
+    if not found:
+        base = strip_numeric_suffix(sanitized)
+        for lk, lv in col_lower.items():
+            if base == strip_numeric_suffix(lk.replace(' ', '_').replace('-', '_')):
+                found = lv
+                break
+    if not found:
+        clean_db = sanitized.replace('_', '')
+        for lk, lv in col_lower.items():
+            clean_col = lk.replace('_', '').replace(' ', '')
+            if clean_db == clean_col or (len(clean_db) > 3 and clean_db in clean_col):
+                found = lv
+                break
+
+    return found, db_field_raw
 
 
 def generate_excel():
@@ -128,7 +142,9 @@ def generate_excel():
     output_path = config.OUTPUT_FILES['calls_consolidate']
 
     print(f"Template: {template_path}")
-    wb = load_template(template_path)
+
+    match_mapping, defaults, template_headers = read_template_info(template_path)
+    print(f"Mapeo Match: {len(match_mapping)} columnas, defaults: {len(defaults)}")
 
     conn = mysql.connector.connect(**config.MYSQL_CONFIG)
     cursor = conn.cursor()
@@ -137,80 +153,73 @@ def generate_excel():
     conn.close()
     print(f"Columnas en tabla: {len(existing_columns)}")
 
-    match_mapping, defaults = read_match_mapping(wb, existing_columns)
-    print(f"Mapeo Match: {len(match_mapping)} columnas, defaults: {len(defaults)}")
+    col_map = {}
+    db_fields_raw = []
+    for hdr in template_headers:
+        if hdr in match_mapping:
+            resolved, raw = resolve_db_field(hdr, match_mapping, existing_columns)
+            if resolved:
+                col_map[hdr] = resolved
+                db_fields_raw.append(raw if raw else resolved)
 
-    db_fields = list(match_mapping.values())
-    rows, valid_fields = get_data_from_db(db_fields, table_name)
+    rows, field_names = get_data_from_db(db_fields_raw, table_name)
     print(f"Filas obtenidas: {len(rows)}")
 
-    if 'Template' not in wb.sheetnames:
-        raise ValueError("El template no tiene un sheet llamado 'Template'")
+    field_index = {name: idx for idx, name in enumerate(field_names)}
 
-    ws = wb['Template']
+    output_dir = os.path.dirname(output_path)
+    os.makedirs(output_dir, exist_ok=True)
 
-    # Build mapping: template column index -> db_field
-    col_to_db = {}
-    col_has_default = {}
-    max_col = ws.max_column if ws.max_column > 50 else 100
-    for col in range(1, max_col + 1):
-        header_value = ws.cell(1, col).value
-        if header_value:
-            header_str = str(header_value).strip()
-            if header_str in match_mapping:
-                col_to_db[col] = match_mapping[header_str]
-            if header_str in defaults:
-                col_has_default[col] = defaults[header_str]
+    with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
+        df = pd.DataFrame(columns=template_headers)
+        df.to_excel(writer, sheet_name='Template', index=False)
 
-    print(f"Columnas en template con mapping: {len(col_to_db)}")
+        workbook = writer.book
+        worksheet = writer.sheets['Template']
 
-    data_start_row = 2
-    # Clear all existing data rows (need enough rows for all data)
-    for row in range(data_start_row, data_start_row + len(rows) + 10):
-        for col in range(1, max_col + 1):
-            cell = ws.cell(row, col)
-            cell.value = None
+        header_fmt = workbook.add_format({
+            'bold': True, 'bg_color': '#4472C4', 'font_color': '#FFFFFF',
+            'border': 1, 'text_wrap': True, 'valign': 'vcenter'
+        })
+        data_fmt = workbook.add_format({'valign': 'vcenter'})
 
-    for row_idx, row_data in enumerate(rows, start=data_start_row):
-        for excel_col, db_field in col_to_db.items():
-            if db_field in valid_fields:
-                field_pos = valid_fields.index(db_field)
-                value = row_data[field_pos]
-                cell = ws.cell(row_idx, excel_col)
-                if value is None or value == '':
-                    if excel_col in col_has_default:
-                        cell.value = col_has_default[excel_col]
+        for col_num, hdr in enumerate(template_headers):
+            worksheet.write(0, col_num, hdr, header_fmt)
+
+        data_row = 1
+        for row_data in rows:
+            for col_num, hdr in enumerate(template_headers):
+                if hdr in col_map:
+                    db_field = col_map[hdr]
+                    if db_field == '__month__':
+                        idx = field_index.get('report_month')
+                        value = row_data[idx] if idx is not None else ''
+                    elif db_field == '__year__':
+                        idx = field_index.get('report_year')
+                        value = row_data[idx] if idx is not None else ''
+                    elif db_field in field_index:
+                        idx = field_index[db_field]
+                        value = row_data[idx] if idx < len(row_data) else ''
                     else:
-                        cell.value = None
-                elif isinstance(value, datetime):
-                    cell.value = value
-                elif isinstance(value, (int, float)):
-                    if _is_date_format(cell.number_format):
-                        cell.value = str(value)
-                    else:
-                        cell.value = value
+                        value = ''
+                elif hdr in defaults:
+                    value = defaults[hdr]
                 else:
-                    cell.value = str(value) if value else None
+                    value = ''
 
-    clean_font = Font()
-    clean_fill = PatternFill(fill_type=None)
-    clean_border = Border()
-    clean_alignment = Alignment(horizontal='left', vertical='center')
+                if value is None:
+                    value = ''
+                elif isinstance(value, datetime):
+                    worksheet.write_datetime(data_row, col_num, value, data_fmt)
+                    continue
+                elif isinstance(value, (int, float)):
+                    pass
+                else:
+                    value = str(value) if value else ''
 
-    for row in range(data_start_row, ws.max_row + 1):
-        for col in range(1, ws.max_column + 1):
-            cell = ws.cell(row, col)
-            if cell.value is not None:
-                cell.font = clean_font
-                cell.fill = clean_fill
-                cell.border = clean_border
-                cell.alignment = clean_alignment
+                worksheet.write(data_row, col_num, value, data_fmt)
+            data_row += 1
 
-    for sheet_name in wb.sheetnames:
-        if sheet_name != 'Template':
-            wb.remove(wb[sheet_name])
-
-    safe_save(wb, output_path)
     print(f"Excel generado: {output_path}")
     return output_path
 

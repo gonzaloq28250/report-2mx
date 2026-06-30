@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import mysql.connector
-from xlsx_utils import safe_save, load_template
-from openpyxl.styles import PatternFill, Border, Alignment, Font
-from pathlib import Path
+import pandas as pd
+from openpyxl import load_workbook
 from datetime import datetime
+from pathlib import Path
 import sys
 import os
 
@@ -29,20 +29,34 @@ REPORT_MAPPING = {
 }
 
 
-def get_table_columns():
-    conn = mysql.connector.connect(**config.MYSQL_CONFIG)
-    cursor = conn.cursor()
-    cursor.execute("SHOW COLUMNS FROM pr_calls_visits_escalation")
-    columns = {col[0]: col[1] for col in cursor.fetchall()}
-    cursor.close()
-    conn.close()
-    return columns
+def read_template_info(template_path):
+    wb = load_workbook(template_path, read_only=True)
+
+    sheet_name = None
+    for sn in wb.sheetnames:
+        if sn.startswith('PR Calls and Visits Escalation'):
+            sheet_name = sn
+            break
+    if not sheet_name:
+        sheet_name = wb.sheetnames[0]
+
+    ws = wb[sheet_name]
+    headers = []
+    for col in range(1, 200):
+        val = ws.cell(1, col).value
+        if val:
+            headers.append(str(val).strip())
+        else:
+            break
+
+    wb.close()
+    return headers, sheet_name
 
 
 def get_data_from_db(from_date=None, to_date=None):
     conn = mysql.connector.connect(**config.MYSQL_CONFIG)
     cursor = conn.cursor()
-    db_fields = [REPORT_MAPPING[report_col] for report_col in REPORT_MAPPING]
+    db_fields = list(REPORT_MAPPING.values())
     fields_str = ', '.join([f'`{f}`' for f in db_fields])
     query = f"SELECT {fields_str} FROM pr_calls_visits_escalation"
     params = []
@@ -52,79 +66,66 @@ def get_data_from_db(from_date=None, to_date=None):
     query += " ORDER BY date DESC"
     cursor.execute(query, params)
     rows = cursor.fetchall()
+    field_names = [d[0] for d in cursor.description]
     cursor.close()
     conn.close()
-    return rows, db_fields
+    return rows, field_names
 
 
 def generate_excel(from_date=None, to_date=None):
     print(f"Template: {TEMPLATE_PATH}")
-    wb = load_template(TEMPLATE_PATH)
-    existing_columns = get_table_columns()
-    print(f"Columnas en tabla: {len(existing_columns)}")
 
-    rows, db_fields = get_data_from_db(from_date, to_date)
+    template_headers, sheet_name = read_template_info(TEMPLATE_PATH)
+    print(f"Columnas en template: {len(template_headers)}")
+
+    rows, field_names = get_data_from_db(from_date, to_date)
     print(f"Filas obtenidas: {len(rows)}")
 
-    sheet_name = 'PR Calls and Visits Escalation'
-    for sn in wb.sheetnames:
-        if sn.startswith('PR Calls and Visits Escalation'):
-            sheet_name = sn
-            break
+    field_index = {name: idx for idx, name in enumerate(field_names)}
 
-    if sheet_name not in wb.sheetnames:
-        raise ValueError(f"El template no tiene el sheet '{sheet_name}'. Sheets: {wb.sheetnames}")
+    output_dir = os.path.dirname(OUTPUT_PATH)
+    os.makedirs(output_dir, exist_ok=True)
 
-    ws = wb[sheet_name]
+    with pd.ExcelWriter(OUTPUT_PATH, engine='xlsxwriter') as writer:
+        df = pd.DataFrame(columns=template_headers)
+        df.to_excel(writer, sheet_name=sheet_name[:31], index=False)
 
-    col_mapping = {}
-    for col in range(1, 20):
-        header_value = ws.cell(1, col).value
-        if header_value:
-            header_str = str(header_value).strip()
-            if header_str in REPORT_MAPPING:
-                db_field = REPORT_MAPPING[header_str]
-                if db_field in existing_columns:
-                    col_mapping[db_field] = col
+        workbook = writer.book
+        worksheet = writer.sheets[sheet_name[:31]]
 
-    print(f"Columnas mapeadas: {len(col_mapping)}")
+        header_fmt = workbook.add_format({
+            'bold': True, 'bg_color': '#4472C4', 'font_color': '#FFFFFF',
+            'border': 1, 'text_wrap': True, 'valign': 'vcenter'
+        })
+        data_fmt = workbook.add_format({'valign': 'vcenter'})
 
-    for row in range(2, ws.max_row + 1):
-        for col in range(1, ws.max_column + 1):
-            ws.cell(row, col).value = None
+        for col_num, hdr in enumerate(template_headers):
+            worksheet.write(0, col_num, hdr, header_fmt)
 
-    for row_idx, row_data in enumerate(rows, start=2):
-        for col_idx, db_field in enumerate(db_fields):
-            if db_field in col_mapping:
-                excel_col = col_mapping[db_field]
-                value = row_data[col_idx]
-                cell = ws.cell(row_idx, excel_col)
-                if isinstance(value, datetime):
-                    cell.value = value
-                elif isinstance(value, (int, float)):
-                    cell.value = value
-                else:
-                    cell.value = str(value) if value else None
+        col_map = {}
+        for idx, hdr in enumerate(template_headers):
+            if hdr in REPORT_MAPPING:
+                db_field = REPORT_MAPPING[hdr]
+                if db_field in field_index:
+                    col_map[idx] = field_index[db_field]
 
-    clean_fill = PatternFill(fill_type=None)
-    clean_border = Border()
-    clean_alignment = Alignment(horizontal='left', vertical='center')
-    clean_font = Font()
-    for row in range(2, ws.max_row + 1):
-        for col in range(1, ws.max_column + 1):
-            cell = ws.cell(row, col)
-            if cell.value is not None:
-                cell.font = clean_font
-                cell.fill = clean_fill
-                cell.border = clean_border
-                cell.alignment = clean_alignment
+        data_row = 1
+        for row_data in rows:
+            for col_num in range(len(template_headers)):
+                if col_num in col_map:
+                    value = row_data[col_map[col_num]]
+                    if value is None:
+                        value = ''
+                    elif isinstance(value, datetime):
+                        worksheet.write_datetime(data_row, col_num, value, data_fmt)
+                        continue
+                    elif isinstance(value, (int, float)):
+                        pass
+                    else:
+                        value = str(value) if value else ''
+                    worksheet.write(data_row, col_num, value, data_fmt)
+            data_row += 1
 
-    target_name = sheet_name
-    for sn in list(wb.sheetnames):
-        if sn != target_name:
-            wb.remove(wb[sn])
-
-    safe_save(wb, OUTPUT_PATH)
     print(f"Excel generado: {OUTPUT_PATH}")
     return OUTPUT_PATH
 
