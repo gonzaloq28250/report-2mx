@@ -1,12 +1,13 @@
 """
 Generar Service-Level-Report.xlsx desde MySQL para ICC Amex
-Copia template como archivo raw, luego escribe datos con pandas+openpyxl
+Lee formato del template, escribe datos con xlsxwriter (sin corrupcion)
 """
 
 import mysql.connector
-import shutil
 import pandas as pd
-from pathlib import Path
+from openpyxl import load_workbook
+from openpyxl.utils import get_column_letter
+from xlsxwriter.utility import xl_col_to_name
 import sys
 import os
 
@@ -75,6 +76,31 @@ def get_service_level_data(conn):
     return data
 
 
+def read_template_format(template_path):
+    wb = load_workbook(template_path)
+    ws = wb['Service Level']
+
+    header_row = 1
+    for row in range(1, 20):
+        if ws.cell(row, 1).value == 'Date':
+            header_row = row
+            break
+
+    headers = []
+    col_widths = {}
+    for col in range(1, 20):
+        cell = ws.cell(header_row, col)
+        val = cell.value
+        if val:
+            headers.append(str(val))
+            col_letter = get_column_letter(col)
+            if ws.column_dimensions[col_letter].width:
+                col_widths[col - 1] = ws.column_dimensions[col_letter].width
+
+    wb.close()
+    return headers, col_widths
+
+
 def generate_excel(output_path=None):
     print("=== Generando Service-Level-Report.xlsx ===\n")
 
@@ -83,27 +109,38 @@ def generate_excel(output_path=None):
 
     try:
         conn = get_connection()
-
         sl_data = get_service_level_data(conn)
         df = pd.DataFrame(sl_data)
+
+        template_headers, col_widths = read_template_format(TEMPLATE_PATH)
 
         output_dir = os.path.dirname(output_path)
         os.makedirs(output_dir, exist_ok=True)
 
         with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
-            df.to_excel(writer, sheet_name='Service Level', index=False, startrow=1)
+            df.to_excel(writer, sheet_name='Service Level', index=False)
 
             workbook = writer.book
             worksheet = writer.sheets['Service Level']
 
-            header_fmt = workbook.add_format({'bold': True, 'border': 1})
+            header_fmt = workbook.add_format({
+                'bold': True,
+                'bg_color': '#4472C4',
+                'font_color': '#FFFFFF',
+                'border': 1,
+                'text_wrap': True,
+                'valign': 'vcenter'
+            })
+
             for col_num, col_name in enumerate(df.columns):
                 worksheet.write(0, col_num, col_name, header_fmt)
 
-            worksheet.set_column('A:A', 12)
-            worksheet.set_column('B:B', 12)
-            worksheet.set_column('C:E', 20)
-            worksheet.set_column('F:F', 16)
+            for col_idx, width in col_widths.items():
+                worksheet.set_column(col_idx, col_idx, width)
+
+            date_fmt = workbook.add_format({'num_format': 'yyyy-mm-dd'})
+            for row_idx in range(len(df)):
+                worksheet.write_datetime(row_idx + 1, 0, df.iloc[row_idx]['Date'].to_pydatetime(), date_fmt)
 
         print(f"\nExcel generado: {output_path}")
         return str(output_path)
