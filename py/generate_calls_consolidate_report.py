@@ -160,7 +160,7 @@ def generate_excel():
             resolved, raw = resolve_db_field(hdr, match_mapping, existing_columns)
             if resolved:
                 col_map[hdr] = resolved
-                db_fields_raw.append(raw if raw else resolved)
+                db_fields_raw.append(resolved)
 
     rows, field_names = get_data_from_db(db_fields_raw, table_name)
     print(f"Filas obtenidas: {len(rows)}")
