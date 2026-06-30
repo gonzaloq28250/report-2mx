@@ -484,9 +484,10 @@ def write_campaign_sheet(workbook, campaign_name, campaign_data, summary_data, d
     ws.write(cr, 1, 0)
     cr += 1
     ws.write(cr, 0, 'Total Workable Leads - YTD', label_fmt)
+    workable_row = cr
     ws.write(cr, 1, f'=B{cr}-Z{summary_row+1}')
 
-    return summary_row, callable_row
+    return summary_row, callable_row, workable_row
 
 
 def write_campaign_summary(workbook, campaigns_info):
@@ -506,26 +507,51 @@ def write_campaign_summary(workbook, campaigns_info):
     ws.write(0, 4, 'Total Workable Leads', header_fmt)
     ws.write(0, 5, 'Segmentation', header_fmt)
 
-    segmentation_map = {'TRENDING': 'Trending Inactive', 'INACT': 'Inactive', 'NYA': 'Never Active', 'NS': 'New Signings', 'ACT': 'Active'}
-
-    data_row = 1
     seg_campaigns = {}
+    data_row = 1
     for info in campaigns_info:
-        ws.write(data_row, 0, info['campaign'])
-        ws.write(data_row, 1, f"='{info['campaign']}'!B{info['penetration_row']+1}", pct_fmt)
-        ws.write(data_row, 2, f"='{info['campaign']}'!H{info['net_contact_row']+1}", pct_fmt)
-        ws.write(data_row, 3, f"='{info['campaign']}'!B{info['callable_row']+1}")
-        ws.write(data_row, 4, f"='{info['campaign']}'!B{info['workable_row']+1}")
-        ws.write(data_row, 5, info['seg'])
+        campaign = info['campaign']
         seg = info['seg']
+
+        ws.write(data_row, 0, campaign)
+        ws.write(data_row, 1, f"='{campaign}'!B{info['summary_row']+3}", pct_fmt)
+        ws.write(data_row, 2, f"='{campaign}'!H{info['summary_row']+4}", pct_fmt)
+        ws.write(data_row, 3, f"='{campaign}'!B{info['callable_row']+1}")
+        ws.write(data_row, 4, f"='{campaign}'!B{info['workable_row']+1}")
+        ws.write(data_row, 5, seg)
+
         if seg not in seg_campaigns:
             seg_campaigns[seg] = []
         seg_campaigns[seg].append(data_row)
         data_row += 1
 
-    seg_row = 1
+    seg_row = 2
     for seg_name, rows in seg_campaigns.items():
-        ws.write(seg_row - 1 + data_row, 7, seg_name)
+        ws.write(seg_row, 7, seg_name, label_fmt)
+
+        completes_parts = []
+        net_contacts_parts = []
+        col_d_refs = []
+        col_e_refs = []
+
+        for r in rows:
+            campaign_name = campaigns_info[r - 1]['campaign']
+            summary_row = campaigns_info[r - 1]['summary_row']
+            completes_parts.append(f"'{campaign_name}'!V{summary_row+1}")
+            net_contacts_parts.append(f"'{campaign_name}'!H{summary_row+1}")
+            col_d_refs.append(f"D{r+1}")
+            col_e_refs.append(f"E{r+1}")
+
+        sum_completes = ",".join(completes_parts)
+        sum_net_contacts = ",".join(net_contacts_parts)
+        col_d_range = ",".join(col_d_refs)
+        col_e_range = ",".join(col_e_refs)
+
+        ws.write(seg_row, 8, f"=SUM({sum_completes})/SUM({col_e_range})", pct_fmt)
+        ws.write(seg_row, 9, f"=SUM({sum_net_contacts})/SUM({col_e_range})", pct_fmt)
+        ws.write(seg_row, 10, f"=SUM({col_d_range})")
+        ws.write(seg_row, 11, f"=SUM({col_e_range})")
+
         seg_row += 1
 
 
@@ -554,16 +580,11 @@ def generate_daily_campaign_results_v3():
         campaigns_info = []
         for campaign in campaign_names:
             cd = campaign_df[campaign_df['list_name'] == campaign]
-            summary_row, callable_row = write_campaign_sheet(writerWorkbook, campaign, cd, summary_data, 3)
-            net_contact_row = summary_row + 2
-            penetration_row = summary_row + 1
-            workable_row = summary_row + 5
+            summary_row, callable_row, workable_row = write_campaign_sheet(writerWorkbook, campaign, cd, summary_data, 3)
             campaigns_info.append({
                 'campaign': campaign,
                 'seg': next((v for k, v in {'TRENDING': 'Trending Inactive', 'INACT': 'Inactive', 'NYA': 'Never Active', 'NS': 'New Signings', 'ACT': 'Active'}.items() if k in campaign), 'Unknown'),
                 'summary_row': summary_row,
-                'penetration_row': penetration_row,
-                'net_contact_row': net_contact_row,
                 'callable_row': callable_row,
                 'workable_row': workable_row,
             })
