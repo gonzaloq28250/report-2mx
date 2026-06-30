@@ -367,7 +367,7 @@ def write_summary_sheet(workbook, summary_data):
         ws.write(cr, 1, f'=V{ytd_row+1}/(B{cr+4}-Z{ytd_row+1})', pct_fmt)
         cr += 1
         ws.write(cr, 0, 'Net Contact to Callable Leads - YTD')
-        ws.write(cr, 1, f'=H{ytd_row+1}/B{cr+2}', pct_fmt)
+        ws.write(cr, 1, f'=H{ytd_row+1}/B{cr+3}', pct_fmt)
         cr += 1
         ws.write(cr, 0, 'Total Callable Leads Received - YTD')
         ws.write(cr, 1, 21781)
@@ -474,10 +474,10 @@ def write_campaign_sheet(workbook, campaign_name, campaign_data, summary_data, d
 
     cr += 2
     ws.write(cr, 0, 'Penetration Rate - YTD', label_fmt)
-    ws.write(cr, 1, f'=V{summary_row+1}/(B{cr+3}-Z{summary_row+1})', pct_fmt)
+    ws.write(cr, 1, f'=V{summary_row+1}/(B{cr+4}-Z{summary_row+1})', pct_fmt)
     cr += 1
     ws.write(cr, 0, 'Net Contact to Callable Leads - YTD', label_fmt)
-    ws.write(cr, 1, f'=H{summary_row+1}/B{cr+2}', pct_fmt)
+    ws.write(cr, 1, f'=H{summary_row+1}/B{cr+3}', pct_fmt)
     cr += 1
     ws.write(cr, 0, 'Total Callable Leads Received - YTD', label_fmt)
     callable_row = cr
