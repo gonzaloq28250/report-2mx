@@ -5,9 +5,9 @@ Lee formato del template, escribe datos con xlsxwriter (sin corrupcion)
 
 import mysql.connector
 import pandas as pd
+from datetime import datetime
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
-from xlsxwriter.utility import xl_col_to_name
 import sys
 import os
 
@@ -140,7 +140,12 @@ def generate_excel(output_path=None):
 
             date_fmt = workbook.add_format({'num_format': 'yyyy-mm-dd'})
             for row_idx in range(len(df)):
-                worksheet.write_datetime(row_idx + 1, 0, df.iloc[row_idx]['Date'].to_pydatetime(), date_fmt)
+                val = df.iloc[row_idx]['Date']
+                if isinstance(val, datetime):
+                    dt = val
+                else:
+                    dt = datetime(val.year, val.month, val.day)
+                worksheet.write_datetime(row_idx + 1, 0, dt, date_fmt)
 
         print(f"\nExcel generado: {output_path}")
         return str(output_path)
