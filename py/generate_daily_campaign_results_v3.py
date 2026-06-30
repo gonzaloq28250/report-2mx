@@ -378,7 +378,7 @@ def write_summary_sheet(workbook, summary_data):
     return last_data
 
 
-def write_campaign_sheet(workbook, campaign_name, campaign_data, summary_data, data_start_row):
+def write_campaign_sheet(workbook, campaign_name, campaign_data, summary_data, data_start_row, callable_leads=0):
     safe_name = campaign_name[:31]
     ws = workbook.add_worksheet(safe_name)
     date_fmt = workbook.add_format({'num_format': 'yyyy-mm-dd'})
@@ -481,7 +481,7 @@ def write_campaign_sheet(workbook, campaign_name, campaign_data, summary_data, d
     cr += 1
     ws.write(cr, 0, 'Total Callable Leads Received - YTD', label_fmt)
     callable_row = cr
-    ws.write(cr, 1, 0)
+    ws.write(cr, 1, callable_leads)
     cr += 1
     ws.write(cr, 0, 'Total Workable Leads - YTD', label_fmt)
     workable_row = cr
@@ -580,7 +580,9 @@ def generate_daily_campaign_results_v3():
         campaigns_info = []
         for campaign in campaign_names:
             cd = campaign_df[campaign_df['list_name'] == campaign]
-            summary_row, callable_row, workable_row = write_campaign_sheet(writerWorkbook, campaign, cd, summary_data, 2)
+            callable_leads = int(list_name_records_map.get(campaign, 0))
+            print(f"  {campaign}: callable_leads={callable_leads}")
+            summary_row, callable_row, workable_row = write_campaign_sheet(writerWorkbook, campaign, cd, summary_data, 2, callable_leads)
             campaigns_info.append({
                 'campaign': campaign,
                 'seg': next((v for k, v in {'TRENDING': 'Trending Inactive', 'INACT': 'Inactive', 'NYA': 'Never Active', 'NS': 'New Signings', 'ACT': 'Active'}.items() if k in campaign), 'Unknown'),
