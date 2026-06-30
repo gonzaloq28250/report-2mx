@@ -20,6 +20,14 @@ def sanitize_field_name(field_name):
     return field
 
 
+def excel_serial_to_datetime(serial):
+    from datetime import timedelta
+    if not isinstance(serial, (int, float)):
+        return serial
+    epoch = datetime(1899, 12, 30)
+    return epoch + timedelta(days=serial)
+
+
 def read_template_info(template_path):
     wb = load_workbook(template_path, read_only=True)
 
@@ -175,13 +183,21 @@ def generate_excel():
 
         data_row = header_row
         for row_data in rows:
+            entry_date_val = None
+            if entry_date_idx is not None and entry_date_idx < len(row_data):
+                entry_date_val = excel_serial_to_datetime(row_data[entry_date_idx])
+
             for col_num, hdr in enumerate(template_headers):
-                if hdr == 'Month' and entry_date_idx is not None:
-                    val = row_data[entry_date_idx]
-                    value = val.month if isinstance(val, datetime) else ''
-                elif hdr == 'Year' and entry_date_idx is not None:
-                    val = row_data[entry_date_idx]
-                    value = val.year if isinstance(val, datetime) else ''
+                if hdr == 'Month' and entry_date_val:
+                    value = entry_date_val.month if isinstance(entry_date_val, datetime) else ''
+                elif hdr == 'Year' and entry_date_val:
+                    value = entry_date_val.year if isinstance(entry_date_val, datetime) else ''
+                elif hdr == 'Entry_DateSubmitted' and entry_date_val:
+                    if isinstance(entry_date_val, datetime):
+                        worksheet.write_datetime(data_row, col_num, entry_date_val, data_fmt)
+                    else:
+                        worksheet.write(data_row, col_num, str(entry_date_val) if entry_date_val else '', data_fmt)
+                    continue
                 elif hdr in col_map:
                     db_field = col_map[hdr]
                     idx = field_index.get(db_field)
