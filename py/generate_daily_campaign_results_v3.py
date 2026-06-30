@@ -25,34 +25,14 @@ def get_connection():
 
 
 def get_list_name_records_map(conn):
-    cursor = conn.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS list_name_records (id INT AUTO_INCREMENT PRIMARY KEY, list_name VARCHAR(255) NOT NULL, list_records INT NOT NULL DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, UNIQUE KEY (list_name))")
-    cursor.execute("SELECT COUNT(*) FROM list_name_records")
-    count = cursor.fetchone()[0]
-    if count == 0:
-        cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'list_status_summary_report'")
-        if cursor.fetchone()[0] > 0:
-            cursor.execute("SELECT COUNT(*) FROM list_status_summary_report")
-            src_count = cursor.fetchone()[0]
-            if src_count > 0:
-                print(f"  list_name_records vacia, migrando {src_count} filas...")
-                cursor.execute("""
-                    SELECT lead_list_name, SUM(CAST(list_records AS UNSIGNED)) as total_records
-                    FROM list_status_summary_report
-                    WHERE lead_list_name IS NOT NULL AND lead_list_name != ''
-                    GROUP BY lead_list_name
-                """)
-                for row in cursor.fetchall():
-                    cursor.execute(
-                        "INSERT INTO list_name_records (list_name, list_records) VALUES (%s, %s) "
-                        "ON DUPLICATE KEY UPDATE list_records = VALUES(list_records)",
-                        (row[0].strip(), row[1])
-                    )
-                conn.commit()
-    cursor.close()
-    query = "SELECT list_name, list_records FROM list_name_records"
+    query = """
+    SELECT lead_list_name, SUM(CAST(list_records AS UNSIGNED)) as total_records
+    FROM list_status_summary_report
+    WHERE lead_list_name IS NOT NULL AND lead_list_name != ''
+    GROUP BY lead_list_name
+    """
     df = pd.read_sql(query, conn)
-    return {row['list_name'].strip(): row['list_records'] for _, row in df.iterrows()}
+    return {row['lead_list_name'].strip(): int(row['total_records']) for _, row in df.iterrows()}
 
 
 def get_support_tables_map(conn):
