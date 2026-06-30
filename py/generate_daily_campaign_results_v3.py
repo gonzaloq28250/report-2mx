@@ -474,7 +474,7 @@ def write_campaign_sheet(workbook, campaign_name, campaign_data, summary_data, d
 
     cr += 2
     ws.write(cr, 0, 'Penetration Rate - YTD', label_fmt)
-    ws.write(cr, 1, f'=V{summary_row+1}/(B{cr+4}-Z{summary_row+1})', pct_fmt)
+    ws.write(cr, 1, f'=V{summary_row+1}/(B{cr+3}-Z{summary_row+1})', pct_fmt)
     cr += 1
     ws.write(cr, 0, 'Net Contact to Callable Leads - YTD', label_fmt)
     ws.write(cr, 1, f'=H{summary_row+1}/B{cr+2}', pct_fmt)
@@ -580,7 +580,7 @@ def generate_daily_campaign_results_v3():
         campaigns_info = []
         for campaign in campaign_names:
             cd = campaign_df[campaign_df['list_name'] == campaign]
-            summary_row, callable_row, workable_row = write_campaign_sheet(writerWorkbook, campaign, cd, summary_data, 3)
+            summary_row, callable_row, workable_row = write_campaign_sheet(writerWorkbook, campaign, cd, summary_data, 2)
             campaigns_info.append({
                 'campaign': campaign,
                 'seg': next((v for k, v in {'TRENDING': 'Trending Inactive', 'INACT': 'Inactive', 'NYA': 'Never Active', 'NS': 'New Signings', 'ACT': 'Active'}.items() if k in campaign), 'Unknown'),
