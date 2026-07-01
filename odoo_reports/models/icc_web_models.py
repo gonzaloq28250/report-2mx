@@ -42,7 +42,7 @@ def _row_to_vals(row, model_fields):
             continue
         if isinstance(v, Decimal):
             v = float(v)
-        if isinstance(v, str):
+        if isinstance(v, str) and fname in model_fields:
             field = model_fields[fname]
             if field.type == 'date':
                 for fmt in ('%Y-%m-%d', '%Y/%m/%d', '%m/%d/%Y', '%m-%d-%Y'):
@@ -51,6 +51,8 @@ def _row_to_vals(row, model_fields):
                         break
                     except (ValueError, TypeError):
                         continue
+            elif field.type == 'datetime':
+                v = v.split('.')[0]
         if v is None or isinstance(v, (int, float, str, datetime.date, datetime.datetime)):
             vals[fname] = v
     return vals
