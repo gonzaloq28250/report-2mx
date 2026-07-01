@@ -25,12 +25,8 @@ Reports:
     'website': '',
     'license': 'LGPL-3',
     'depends': ['base', 'web'],
-    'external_dependencies': {
-        'python': ['mysql.connector'],
-    },
     'data': [
         'security/ir.model.access.csv',
-        'security/ir.model.access.web.csv',
         'views/icc_report_views.xml',
         'views/icc_report_menu.xml',
         'views/icc_web_views.xml',
