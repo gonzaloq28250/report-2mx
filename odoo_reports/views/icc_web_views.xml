@@ -7,6 +7,7 @@
     <record id="view_icc_service_level_metric_tree" model="ir.ui.view">
         <field name="name">icc.service.level.metric.tree</field>
         <field name="model">icc.service.level.metric</field>
+        <field name="type">tree</field>
         <field name="arch" type="xml">
             <list>
                 <field name="fecha"/>
@@ -23,6 +24,7 @@
     <record id="view_icc_service_level_metric_search" model="ir.ui.view">
         <field name="name">icc.service.level.metric.search</field>
         <field name="model">icc.service.level.metric</field>
+        <field name="type">search</field>
         <field name="arch" type="xml">
             <search>
                 <field name="fecha"/>
@@ -34,250 +36,10 @@
         </field>
     </record>
 
-    <record id="action_icc_service_level_metric" model="ir.actions.act_window">
-        <field name="name">Service Level Metrics</field>
-        <field name="res_model">icc.service.level.metric</field>
-        <field name="view_mode">tree,form,pivot,graph</field>
-        <field name="search_view_id" ref="view_icc_service_level_metric_search"/>
-        <field name="context">{'search_default_year_2026': 1}</field>
-    </record>
-
-    <!-- ============================================================ -->
-    <!-- 2. Daily Campaign Summary                                    -->
-    <!-- ============================================================ -->
-    <record id="view_icc_daily_campaign_summary_tree" model="ir.ui.view">
-        <field name="name">icc.daily.campaign.summary.tree</field>
-        <field name="model">icc.daily.campaign.summary</field>
-        <field name="arch" type="xml">
-            <list>
-                <field name="fecha"/>
-                <field name="spanish_hours" optional="show"/>
-                <field name="english_hours" optional="show"/>
-                <field name="total_hours" optional="show"/>
-                <field name="total_dials" optional="show"/>
-                <field name="dph" optional="show"/>
-                <field name="net_contacts" optional="show"/>
-                <field name="presentations" optional="show"/>
-                <field name="unworkables" optional="show"/>
-                <field name="consultations" optional="show"/>
-                <field name="agent_completes" optional="show"/>
-            </list>
-        </field>
-    </record>
-
-    <record id="view_icc_daily_campaign_summary_search" model="ir.ui.view">
-        <field name="name">icc.daily.campaign.summary.search</field>
-        <field name="model">icc.daily.campaign.summary</field>
-        <field name="arch" type="xml">
-            <search>
-                <field name="fecha"/>
-                <group expand="0" string="Group By">
-                    <filter name="group_by_month" string="Month" context="{'group_by': 'fecha:month'}"/>
-                </group>
-            </search>
-        </field>
-    </record>
-
-    <record id="action_icc_daily_campaign_summary" model="ir.actions.act_window">
-        <field name="name">Daily Campaign Summary</field>
-        <field name="res_model">icc.daily.campaign.summary</field>
-        <field name="view_mode">tree,form,pivot,graph</field>
-        <field name="search_view_id" ref="view_icc_daily_campaign_summary_search"/>
-    </record>
-
-    <!-- ============================================================ -->
-    <!-- 3. Calls Consolidate                                         -->
-    <!-- ============================================================ -->
-    <record id="view_icc_calls_consolidate_tree" model="ir.ui.view">
-        <field name="name">icc.calls.consolidate.tree</field>
-        <field name="model">icc.calls.consolidate</field>
-        <field name="arch" type="xml">
-            <list>
-                <field name="name"/>
-                <field name="seller_id_dba_name" string="DBA"/>
-                <field name="seller_id_city_name" string="City"/>
-                <field name="lead_list_name" string="Campaign"/>
-                <field name="calls_completed"/>
-                <field name="contacted_correct_person"/>
-                <field name="merchant_accept_amex"/>
-                <field name="calls_agent" string="Agent"/>
-                <field name="entry_status" string="Status"/>
-                <field name="entry_datesubmitted" string="Date"/>
-            </list>
-        </field>
-    </record>
-
-    <record id="action_icc_calls_consolidate" model="ir.actions.act_window">
-        <field name="name">Calls Consolidate</field>
-        <field name="res_model">icc.calls.consolidate</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
-    <!-- ============================================================ -->
-    <!-- 4. Visit Log Optblue                                         -->
-    <!-- ============================================================ -->
-    <record id="view_icc_visit_log_optblue_tree" model="ir.ui.view">
-        <field name="name">icc.visit.log.optblue.tree</field>
-        <field name="model">icc.visit.log.optblue</field>
-        <field name="arch" type="xml">
-            <list>
-                <field name="name"/>
-                <field name="se_number" string="SE"/>
-                <field name="sales_channel_name" string="Channel"/>
-                <field name="visits_agent" string="Agent"/>
-                <field name="seller_id" string="Seller"/>
-                <field name="country"/>
-                <field name="completed_visit"/>
-                <field name="was_pop_placed" string="POP Placed"/>
-                <field name="terminal_tested" string="Terminal Tested"/>
-                <field name="entry_status" string="Status"/>
-                <field name="entry_datesubmitted" string="Date"/>
-            </list>
-        </field>
-    </record>
-
-    <record id="action_icc_visit_log_optblue" model="ir.actions.act_window">
-        <field name="name">Visit Log Optblue</field>
-        <field name="res_model">icc.visit.log.optblue</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
-    <!-- ============================================================ -->
-    <!-- 5. Visits Disposition                                        -->
-    <!-- ============================================================ -->
-    <record id="view_icc_visits_disposition_tree" model="ir.ui.view">
-        <field name="name">icc.visits.disposition.tree</field>
-        <field name="model">icc.visits.disposition</field>
-        <field name="arch" type="xml">
-            <list>
-                <field name="merchantname" string="Merchant"/>
-                <field name="merchantcity" string="City"/>
-                <field name="type_of_merchant" string="Type"/>
-                <field name="agentname" string="Agent"/>
-                <field name="was_organic_amex_pop_in_good_condition" string="POP Good"/>
-                <field name="was_contactless_pop_displayed" string="Contactless"/>
-                <field name="did_you_speak_with_a_decision_maker" string="Decision Maker"/>
-                <field name="acceptance_meter" string="Acceptance"/>
-                <field name="entry_status" string="Status"/>
-            </list>
-        </field>
-    </record>
-
-    <record id="action_icc_visits_disposition" model="ir.actions.act_window">
-        <field name="name">Visits Disposition</field>
-        <field name="res_model">icc.visits.disposition</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
-    <!-- ============================================================ -->
-    <!-- 6. Call Disposition                                          -->
-    <!-- ============================================================ -->
-    <record id="view_icc_call_disposition_tree" model="ir.ui.view">
-        <field name="name">icc.call.disposition.tree</field>
-        <field name="model">icc.call.disposition</field>
-        <field name="arch" type="xml">
-            <list>
-                <field name="senumber" string="SE"/>
-                <field name="name"/>
-                <field name="lead_list_name" string="Campaign"/>
-                <field name="disposition"/>
-                <field name="if_agent_spoke_with_the_contact" string="Spoke"/>
-                <field name="is_merchant_aware_that_they_can_accept_american_express" string="Aware Amex"/>
-                <field name="will_merchant_agree_to_place_pop" string="POP"/>
-                <field name="calls_agent" string="Agent"/>
-                <field name="entry_status" string="Status"/>
-            </list>
-        </field>
-    </record>
-
-    <record id="action_icc_call_disposition" model="ir.actions.act_window">
-        <field name="name">Call Disposition</field>
-        <field name="res_model">icc.call.disposition</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
-    <!-- ============================================================ -->
-    <!-- 7. PR Calls Duration                                         -->
-    <!-- ============================================================ -->
-    <record id="view_icc_pr_calls_duration_tree" model="ir.ui.view">
-        <field name="name">icc.pr.calls.duration.tree</field>
-        <field name="model">icc.pr.calls.duration</field>
-        <field name="arch" type="xml">
-            <list>
-                <field name="date"/>
-                <field name="time"/>
-                <field name="talk_time" string="Talk Time"/>
-                <field name="se_number" string="SE"/>
-                <field name="disposition"/>
-                <field name="lead_list_name" string="Campaign"/>
-                <field name="locale"/>
-                <field name="agent_name" string="Agent"/>
-            </list>
-        </field>
-    </record>
-
-    <record id="action_icc_pr_calls_duration" model="ir.actions.act_window">
-        <field name="name">PR Calls Duration</field>
-        <field name="res_model">icc.pr.calls.duration</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
-    <!-- ============================================================ -->
-    <!-- 8. PR Escalation                                             -->
-    <!-- ============================================================ -->
-    <record id="view_icc_pr_escalation_tree" model="ir.ui.view">
-        <field name="name">icc.pr.escalation.tree</field>
-        <field name="model">icc.pr.escalation</field>
-        <field name="arch" type="xml">
-            <list>
-                <field name="date"/>
-                <field name="agent_name" string="Agent"/>
-                <field name="program"/>
-                <field name="contact_name" string="Contact"/>
-                <field name="business_name" string="Business"/>
-                <field name="se_number" string="SE"/>
-                <field name="complaint_reason" string="Reason"/>
-                <field name="callback_requested" string="Callback"/>
-                <field name="resolved"/>
-            </list>
-        </field>
-    </record>
-
-    <record id="action_icc_pr_escalation" model="ir.actions.act_window">
-        <field name="name">PR Escalation</field>
-        <field name="res_model">icc.pr.escalation</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
-    <!-- ============================================================ -->
-    <!-- 9. OPTOUTS-DNC                                               -->
-    <!-- ============================================================ -->
-    <record id="view_icc_optouts_dnc_tree" model="ir.ui.view">
-        <field name="name">icc.optouts.dnc.tree</field>
-        <field name="model">icc.optouts.dnc</field>
-        <field name="arch" type="xml">
-            <list>
-                <field name="dnc_number" string="DNC Number"/>
-                <field name="seller_id" string="Seller"/>
-                <field name="created_at" string="Date"/>
-            </list>
-        </field>
-    </record>
-
-    <record id="action_icc_optouts_dnc" model="ir.actions.act_window">
-        <field name="name">OPTOUTS-DNC</field>
-        <field name="res_model">icc.optouts.dnc</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
-    <!-- ============================================================ -->
-    <!-- Form Views (with Sync buttons)                              -->
-    <!-- ============================================================ -->
-
-    <!-- 1. Service Level Form -->
     <record id="view_icc_service_level_metric_form" model="ir.ui.view">
         <field name="name">icc.service.level.metric.form</field>
         <field name="model">icc.service.level.metric</field>
+        <field name="type">form</field>
         <field name="arch" type="xml">
             <form>
                 <header>
@@ -299,10 +61,56 @@
         </field>
     </record>
 
-    <!-- 2. Daily Campaign Form -->
+    <record id="action_icc_service_level_metric" model="ir.actions.act_window">
+        <field name="name">Service Level Metrics</field>
+        <field name="res_model">icc.service.level.metric</field>
+        <field name="view_mode">tree,form,pivot,graph</field>
+        <field name="search_view_id" ref="view_icc_service_level_metric_search"/>
+        <field name="context">{'search_default_year_2026': 1}</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- 2. Daily Campaign Summary                                    -->
+    <!-- ============================================================ -->
+    <record id="view_icc_daily_campaign_summary_tree" model="ir.ui.view">
+        <field name="name">icc.daily.campaign.summary.tree</field>
+        <field name="model">icc.daily.campaign.summary</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="fecha"/>
+                <field name="spanish_hours" optional="show"/>
+                <field name="english_hours" optional="show"/>
+                <field name="total_hours" optional="show"/>
+                <field name="total_dials" optional="show"/>
+                <field name="dph" optional="show"/>
+                <field name="net_contacts" optional="show"/>
+                <field name="presentations" optional="show"/>
+                <field name="unworkables" optional="show"/>
+                <field name="consultations" optional="show"/>
+                <field name="agent_completes" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_icc_daily_campaign_summary_search" model="ir.ui.view">
+        <field name="name">icc.daily.campaign.summary.search</field>
+        <field name="model">icc.daily.campaign.summary</field>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="fecha"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_by_month" string="Month" context="{'group_by': 'fecha:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="view_icc_daily_campaign_summary_form" model="ir.ui.view">
         <field name="name">icc.daily.campaign.summary.form</field>
         <field name="model">icc.daily.campaign.summary</field>
+        <field name="type">form</field>
         <field name="arch" type="xml">
             <form>
                 <header>
@@ -326,10 +134,40 @@
         </field>
     </record>
 
-    <!-- 3. Calls Consolidate Form -->
+    <record id="action_icc_daily_campaign_summary" model="ir.actions.act_window">
+        <field name="name">Daily Campaign Summary</field>
+        <field name="res_model">icc.daily.campaign.summary</field>
+        <field name="view_mode">tree,form,pivot,graph</field>
+        <field name="search_view_id" ref="view_icc_daily_campaign_summary_search"/>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- 3. Calls Consolidate                                         -->
+    <!-- ============================================================ -->
+    <record id="view_icc_calls_consolidate_tree" model="ir.ui.view">
+        <field name="name">icc.calls.consolidate.tree</field>
+        <field name="model">icc.calls.consolidate</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="seller_id_dba_name" string="DBA"/>
+                <field name="seller_id_city_name" string="City"/>
+                <field name="lead_list_name" string="Campaign"/>
+                <field name="calls_completed"/>
+                <field name="contacted_correct_person"/>
+                <field name="merchant_accept_amex"/>
+                <field name="calls_agent" string="Agent"/>
+                <field name="entry_status" string="Status"/>
+                <field name="entry_datesubmitted" string="Date"/>
+            </list>
+        </field>
+    </record>
+
     <record id="view_icc_calls_consolidate_form" model="ir.ui.view">
         <field name="name">icc.calls.consolidate.form</field>
         <field name="model">icc.calls.consolidate</field>
+        <field name="type">form</field>
         <field name="arch" type="xml">
             <form>
                 <header>
@@ -354,10 +192,40 @@
         </field>
     </record>
 
-    <!-- 4. Visit Log Form -->
+    <record id="action_icc_calls_consolidate" model="ir.actions.act_window">
+        <field name="name">Calls Consolidate</field>
+        <field name="res_model">icc.calls.consolidate</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- 4. Visit Log Optblue                                         -->
+    <!-- ============================================================ -->
+    <record id="view_icc_visit_log_optblue_tree" model="ir.ui.view">
+        <field name="name">icc.visit.log.optblue.tree</field>
+        <field name="model">icc.visit.log.optblue</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="se_number" string="SE"/>
+                <field name="sales_channel_name" string="Channel"/>
+                <field name="visits_agent" string="Agent"/>
+                <field name="seller_id" string="Seller"/>
+                <field name="country"/>
+                <field name="completed_visit"/>
+                <field name="was_pop_placed" string="POP Placed"/>
+                <field name="terminal_tested" string="Terminal Tested"/>
+                <field name="entry_status" string="Status"/>
+                <field name="entry_datesubmitted" string="Date"/>
+            </list>
+        </field>
+    </record>
+
     <record id="view_icc_visit_log_optblue_form" model="ir.ui.view">
         <field name="name">icc.visit.log.optblue.form</field>
         <field name="model">icc.visit.log.optblue</field>
+        <field name="type">form</field>
         <field name="arch" type="xml">
             <form>
                 <header>
@@ -382,10 +250,38 @@
         </field>
     </record>
 
-    <!-- 5. Visits Disposition Form -->
+    <record id="action_icc_visit_log_optblue" model="ir.actions.act_window">
+        <field name="name">Visit Log Optblue</field>
+        <field name="res_model">icc.visit.log.optblue</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- 5. Visits Disposition                                        -->
+    <!-- ============================================================ -->
+    <record id="view_icc_visits_disposition_tree" model="ir.ui.view">
+        <field name="name">icc.visits.disposition.tree</field>
+        <field name="model">icc.visits.disposition</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="merchantname" string="Merchant"/>
+                <field name="merchantcity" string="City"/>
+                <field name="type_of_merchant" string="Type"/>
+                <field name="agentname" string="Agent"/>
+                <field name="was_organic_amex_pop_in_good_condition" string="POP Good"/>
+                <field name="was_contactless_pop_displayed" string="Contactless"/>
+                <field name="did_you_speak_with_a_decision_maker" string="Decision Maker"/>
+                <field name="acceptance_meter" string="Acceptance"/>
+                <field name="entry_status" string="Status"/>
+            </list>
+        </field>
+    </record>
+
     <record id="view_icc_visits_disposition_form" model="ir.ui.view">
         <field name="name">icc.visits.disposition.form</field>
         <field name="model">icc.visits.disposition</field>
+        <field name="type">form</field>
         <field name="arch" type="xml">
             <form>
                 <header>
@@ -409,10 +305,38 @@
         </field>
     </record>
 
-    <!-- 6. Call Disposition Form -->
+    <record id="action_icc_visits_disposition" model="ir.actions.act_window">
+        <field name="name">Visits Disposition</field>
+        <field name="res_model">icc.visits.disposition</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- 6. Call Disposition                                          -->
+    <!-- ============================================================ -->
+    <record id="view_icc_call_disposition_tree" model="ir.ui.view">
+        <field name="name">icc.call.disposition.tree</field>
+        <field name="model">icc.call.disposition</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="senumber" string="SE"/>
+                <field name="name"/>
+                <field name="lead_list_name" string="Campaign"/>
+                <field name="disposition"/>
+                <field name="if_agent_spoke_with_the_contact" string="Spoke"/>
+                <field name="is_merchant_aware_that_they_can_accept_american_express" string="Aware Amex"/>
+                <field name="will_merchant_agree_to_place_pop" string="POP"/>
+                <field name="calls_agent" string="Agent"/>
+                <field name="entry_status" string="Status"/>
+            </list>
+        </field>
+    </record>
+
     <record id="view_icc_call_disposition_form" model="ir.ui.view">
         <field name="name">icc.call.disposition.form</field>
         <field name="model">icc.call.disposition</field>
+        <field name="type">form</field>
         <field name="arch" type="xml">
             <form>
                 <header>
@@ -436,10 +360,37 @@
         </field>
     </record>
 
-    <!-- 7. PR Calls Duration Form -->
+    <record id="action_icc_call_disposition" model="ir.actions.act_window">
+        <field name="name">Call Disposition</field>
+        <field name="res_model">icc.call.disposition</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- 7. PR Calls Duration                                         -->
+    <!-- ============================================================ -->
+    <record id="view_icc_pr_calls_duration_tree" model="ir.ui.view">
+        <field name="name">icc.pr.calls.duration.tree</field>
+        <field name="model">icc.pr.calls.duration</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="date"/>
+                <field name="time"/>
+                <field name="talk_time" string="Talk Time"/>
+                <field name="se_number" string="SE"/>
+                <field name="disposition"/>
+                <field name="lead_list_name" string="Campaign"/>
+                <field name="locale"/>
+                <field name="agent_name" string="Agent"/>
+            </list>
+        </field>
+    </record>
+
     <record id="view_icc_pr_calls_duration_form" model="ir.ui.view">
         <field name="name">icc.pr.calls.duration.form</field>
         <field name="model">icc.pr.calls.duration</field>
+        <field name="type">form</field>
         <field name="arch" type="xml">
             <form>
                 <header>
@@ -462,10 +413,38 @@
         </field>
     </record>
 
-    <!-- 8. PR Escalation Form -->
+    <record id="action_icc_pr_calls_duration" model="ir.actions.act_window">
+        <field name="name">PR Calls Duration</field>
+        <field name="res_model">icc.pr.calls.duration</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- 8. PR Escalation                                             -->
+    <!-- ============================================================ -->
+    <record id="view_icc_pr_escalation_tree" model="ir.ui.view">
+        <field name="name">icc.pr.escalation.tree</field>
+        <field name="model">icc.pr.escalation</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="date"/>
+                <field name="agent_name" string="Agent"/>
+                <field name="program"/>
+                <field name="contact_name" string="Contact"/>
+                <field name="business_name" string="Business"/>
+                <field name="se_number" string="SE"/>
+                <field name="complaint_reason" string="Reason"/>
+                <field name="callback_requested" string="Callback"/>
+                <field name="resolved"/>
+            </list>
+        </field>
+    </record>
+
     <record id="view_icc_pr_escalation_form" model="ir.ui.view">
         <field name="name">icc.pr.escalation.form</field>
         <field name="model">icc.pr.escalation</field>
+        <field name="type">form</field>
         <field name="arch" type="xml">
             <form>
                 <header>
@@ -490,10 +469,32 @@
         </field>
     </record>
 
-    <!-- 9. OPTOUTS-DNC Form -->
+    <record id="action_icc_pr_escalation" model="ir.actions.act_window">
+        <field name="name">PR Escalation</field>
+        <field name="res_model">icc.pr.escalation</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- 9. OPTOUTS-DNC                                               -->
+    <!-- ============================================================ -->
+    <record id="view_icc_optouts_dnc_tree" model="ir.ui.view">
+        <field name="name">icc.optouts.dnc.tree</field>
+        <field name="model">icc.optouts.dnc</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="dnc_number" string="DNC Number"/>
+                <field name="seller_id" string="Seller"/>
+                <field name="created_at" string="Date"/>
+            </list>
+        </field>
+    </record>
+
     <record id="view_icc_optouts_dnc_form" model="ir.ui.view">
         <field name="name">icc.optouts.dnc.form</field>
         <field name="model">icc.optouts.dnc</field>
+        <field name="type">form</field>
         <field name="arch" type="xml">
             <form>
                 <header>
@@ -511,5 +512,10 @@
         </field>
     </record>
 
-</odoo>
+    <record id="action_icc_optouts_dnc" model="ir.actions.act_window">
+        <field name="name">OPTOUTS-DNC</field>
+        <field name="res_model">icc.optouts.dnc</field>
+        <field name="view_mode">tree,form</field>
+    </record>
 
+</odoo>
