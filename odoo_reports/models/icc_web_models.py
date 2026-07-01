@@ -37,13 +37,21 @@ def _get_mysql():
 
 def _row_to_vals(row, model_fields):
     vals = {}
-    for fname in row.keys():
+    for fname, v in row.items():
         if fname not in model_fields:
             continue
-        v = row[fname]
         if isinstance(v, Decimal):
             v = float(v)
-        if isinstance(v, (int, float, str, datetime.date, datetime.datetime)) or v is None:
+        if isinstance(v, str):
+            field = model_fields[fname]
+            if field.type == 'date':
+                for fmt in ('%Y-%m-%d', '%Y/%m/%d', '%m/%d/%Y', '%m-%d-%Y'):
+                    try:
+                        v = datetime.datetime.strptime(v, fmt).date()
+                        break
+                    except (ValueError, TypeError):
+                        continue
+        if v is None or isinstance(v, (int, float, str, datetime.date, datetime.datetime)):
             vals[fname] = v
     return vals
 
