@@ -7,6 +7,7 @@ ICC Amex Reports
 ================
 Triggers Python generation scripts for ICC Amex reports.
 Generated Excel files are stored in Odoo and can be downloaded.
+Also includes Web Views that sync data from MySQL for live browsing.
 
 Reports:
 - Daily Campaign Results v3
@@ -24,10 +25,16 @@ Reports:
     'website': '',
     'license': 'LGPL-3',
     'depends': ['base', 'web'],
+    'external_dependencies': {
+        'python': ['mysql.connector'],
+    },
     'data': [
         'security/ir.model.access.csv',
+        'security/ir.model.access.web.csv',
         'views/icc_report_views.xml',
         'views/icc_report_menu.xml',
+        'views/icc_web_views.xml',
+        'views/icc_web_menu.xml',
         'data/icc_report_data.xml',
     ],
     'assets': {

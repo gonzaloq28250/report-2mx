@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Web Reports menu group -->
+    <menuitem id="menu_icc_web_reports"
+              name="Web Reports"
+              parent="menu_icc_reports_root"
+              sequence="20"/>
+
+    <!-- 1. Service Level -->
+    <menuitem id="menu_icc_service_level"
+              name="Service Level Metrics"
+              parent="menu_icc_web_reports"
+              action="action_icc_service_level_metric"
+              sequence="10"/>
+
+    <!-- 2. Daily Campaign -->
+    <menuitem id="menu_icc_daily_campaign"
+              name="Daily Campaign Summary"
+              parent="menu_icc_web_reports"
+              action="action_icc_daily_campaign_summary"
+              sequence="20"/>
+
+    <!-- 3. Calls Consolidate -->
+    <menuitem id="menu_icc_calls_consolidate"
+              name="Calls Consolidate"
+              parent="menu_icc_web_reports"
+              action="action_icc_calls_consolidate"
+              sequence="30"/>
+
+    <!-- 4. Visit Log Optblue -->
+    <menuitem id="menu_icc_visit_log"
+              name="Visit Log Optblue"
+              parent="menu_icc_web_reports"
+              action="action_icc_visit_log_optblue"
+              sequence="40"/>
+
+    <!-- 5. Visits Disposition -->
+    <menuitem id="menu_icc_visits_disposition"
+              name="Visits Disposition"
+              parent="menu_icc_web_reports"
+              action="action_icc_visits_disposition"
+              sequence="50"/>
+
+    <!-- 6. Call Disposition -->
+    <menuitem id="menu_icc_call_disposition"
+              name="Call Disposition"
+              parent="menu_icc_web_reports"
+              action="action_icc_call_disposition"
+              sequence="60"/>
+
+    <!-- 7. PR Calls Duration -->
+    <menuitem id="menu_icc_pr_calls"
+              name="PR Calls Duration"
+              parent="menu_icc_web_reports"
+              action="action_icc_pr_calls_duration"
+              sequence="70"/>
+
+    <!-- 8. PR Escalation -->
+    <menuitem id="menu_icc_pr_escalation"
+              name="PR Escalation"
+              parent="menu_icc_web_reports"
+              action="action_icc_pr_escalation"
+              sequence="80"/>
+
+    <!-- 9. OPTOUTS-DNC -->
+    <menuitem id="menu_icc_optouts_dnc"
+              name="OPTOUTS-DNC"
+              parent="menu_icc_web_reports"
+              action="action_icc_optouts_dnc"
+              sequence="90"/>
+
+</odoo>
