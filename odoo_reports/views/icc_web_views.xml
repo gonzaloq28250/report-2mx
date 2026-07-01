@@ -7,7 +7,7 @@
     <record id="view_icc_service_level_metric_tree" model="ir.ui.view">
         <field name="name">icc.service.level.metric.tree</field>
         <field name="model">icc.service.level.metric</field>
-        <field name="type">tree</field>
+        <field name="type">list</field>
         <field name="arch" type="xml">
             <list>
                 <field name="fecha"/>
@@ -75,7 +75,7 @@
     <record id="view_icc_daily_campaign_summary_tree" model="ir.ui.view">
         <field name="name">icc.daily.campaign.summary.tree</field>
         <field name="model">icc.daily.campaign.summary</field>
-        <field name="type">tree</field>
+        <field name="type">list</field>
         <field name="arch" type="xml">
             <list>
                 <field name="fecha"/>
@@ -147,7 +147,7 @@
     <record id="view_icc_calls_consolidate_tree" model="ir.ui.view">
         <field name="name">icc.calls.consolidate.tree</field>
         <field name="model">icc.calls.consolidate</field>
-        <field name="type">tree</field>
+        <field name="type">list</field>
         <field name="arch" type="xml">
             <list>
                 <field name="name"/>
@@ -204,7 +204,7 @@
     <record id="view_icc_visit_log_optblue_tree" model="ir.ui.view">
         <field name="name">icc.visit.log.optblue.tree</field>
         <field name="model">icc.visit.log.optblue</field>
-        <field name="type">tree</field>
+        <field name="type">list</field>
         <field name="arch" type="xml">
             <list>
                 <field name="name"/>
@@ -262,7 +262,7 @@
     <record id="view_icc_visits_disposition_tree" model="ir.ui.view">
         <field name="name">icc.visits.disposition.tree</field>
         <field name="model">icc.visits.disposition</field>
-        <field name="type">tree</field>
+        <field name="type">list</field>
         <field name="arch" type="xml">
             <list>
                 <field name="merchantname" string="Merchant"/>
@@ -317,7 +317,7 @@
     <record id="view_icc_call_disposition_tree" model="ir.ui.view">
         <field name="name">icc.call.disposition.tree</field>
         <field name="model">icc.call.disposition</field>
-        <field name="type">tree</field>
+        <field name="type">list</field>
         <field name="arch" type="xml">
             <list>
                 <field name="senumber" string="SE"/>
@@ -372,7 +372,7 @@
     <record id="view_icc_pr_calls_duration_tree" model="ir.ui.view">
         <field name="name">icc.pr.calls.duration.tree</field>
         <field name="model">icc.pr.calls.duration</field>
-        <field name="type">tree</field>
+        <field name="type">list</field>
         <field name="arch" type="xml">
             <list>
                 <field name="date"/>
@@ -425,7 +425,7 @@
     <record id="view_icc_pr_escalation_tree" model="ir.ui.view">
         <field name="name">icc.pr.escalation.tree</field>
         <field name="model">icc.pr.escalation</field>
-        <field name="type">tree</field>
+        <field name="type">list</field>
         <field name="arch" type="xml">
             <list>
                 <field name="date"/>
@@ -481,7 +481,7 @@
     <record id="view_icc_optouts_dnc_tree" model="ir.ui.view">
         <field name="name">icc.optouts.dnc.tree</field>
         <field name="model">icc.optouts.dnc</field>
-        <field name="type">tree</field>
+        <field name="type">list</field>
         <field name="arch" type="xml">
             <list>
                 <field name="dnc_number" string="DNC Number"/>
