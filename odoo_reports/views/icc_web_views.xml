@@ -64,7 +64,7 @@
     <record id="action_icc_service_level_metric" model="ir.actions.act_window">
         <field name="name">Service Level Metrics</field>
         <field name="res_model">icc.service.level.metric</field>
-        <field name="view_mode">tree,form,pivot,graph</field>
+        <field name="view_mode">list,form,pivot,graph</field>
         <field name="search_view_id" ref="view_icc_service_level_metric_search"/>
         <field name="context">{'search_default_year_2026': 1}</field>
     </record>
@@ -137,7 +137,7 @@
     <record id="action_icc_daily_campaign_summary" model="ir.actions.act_window">
         <field name="name">Daily Campaign Summary</field>
         <field name="res_model">icc.daily.campaign.summary</field>
-        <field name="view_mode">tree,form,pivot,graph</field>
+        <field name="view_mode">list,form,pivot,graph</field>
         <field name="search_view_id" ref="view_icc_daily_campaign_summary_search"/>
     </record>
 
@@ -195,7 +195,7 @@
     <record id="action_icc_calls_consolidate" model="ir.actions.act_window">
         <field name="name">Calls Consolidate</field>
         <field name="res_model">icc.calls.consolidate</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
     <!-- ============================================================ -->
@@ -253,7 +253,7 @@
     <record id="action_icc_visit_log_optblue" model="ir.actions.act_window">
         <field name="name">Visit Log Optblue</field>
         <field name="res_model">icc.visit.log.optblue</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
     <!-- ============================================================ -->
@@ -308,7 +308,7 @@
     <record id="action_icc_visits_disposition" model="ir.actions.act_window">
         <field name="name">Visits Disposition</field>
         <field name="res_model">icc.visits.disposition</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
     <!-- ============================================================ -->
@@ -363,7 +363,7 @@
     <record id="action_icc_call_disposition" model="ir.actions.act_window">
         <field name="name">Call Disposition</field>
         <field name="res_model">icc.call.disposition</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
     <!-- ============================================================ -->
@@ -416,7 +416,7 @@
     <record id="action_icc_pr_calls_duration" model="ir.actions.act_window">
         <field name="name">PR Calls Duration</field>
         <field name="res_model">icc.pr.calls.duration</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
     <!-- ============================================================ -->
@@ -472,7 +472,7 @@
     <record id="action_icc_pr_escalation" model="ir.actions.act_window">
         <field name="name">PR Escalation</field>
         <field name="res_model">icc.pr.escalation</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
     <!-- ============================================================ -->
@@ -515,7 +515,7 @@
     <record id="action_icc_optouts_dnc" model="ir.actions.act_window">
         <field name="name">OPTOUTS-DNC</field>
         <field name="res_model">icc.optouts.dnc</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
 </odoo>
